@@ -5,7 +5,7 @@ import 'package:signals/signals_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../client.dart';
-import '../../models/page_models.dart';
+import '../../models/page_model.dart';
 import '../../services/client_store_service.dart';
 import 'page_info_screen.dart';
 import 'pages_manager.dart';
@@ -18,7 +18,7 @@ typedef PagesLoaderBuilder = Widget Function(
 
 enum TapOption { navigate, select }
 
-class PagesLoader extends StatefulWidget {
+class PagesIndex extends StatefulWidget {
   /// A widget that loads the pages from the [PagesManager]
   final PagesLoaderBuilder builder;
 
@@ -40,7 +40,7 @@ class PagesLoader extends StatefulWidget {
   /// Page info body builder
   final Widget Function(BuildContext context, String text) infoBodyBuilder;
 
-  const PagesLoader({
+  const PagesIndex({
     super.key,
     required this.builder,
     required this.client,
@@ -54,10 +54,10 @@ class PagesLoader extends StatefulWidget {
   });
 
   @override
-  State<PagesLoader> createState() => _PagesLoaderState();
+  State<PagesIndex> createState() => _PagesIndexState();
 }
 
-class _PagesLoaderState extends State<PagesLoader> {
+class _PagesIndexState extends State<PagesIndex> {
   @override
   Widget build(BuildContext context) {
     return Watch((_) {

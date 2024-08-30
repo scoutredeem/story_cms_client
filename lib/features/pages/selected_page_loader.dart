@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
 
-import '../../models/page_models.dart';
+import '../../models/page_model.dart';
 import 'pages_manager.dart';
 
 class SelectedPageLoader extends StatelessWidget {

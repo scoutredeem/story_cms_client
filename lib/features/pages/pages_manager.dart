@@ -4,7 +4,7 @@ import 'package:signals/signals.dart';
 import 'package:story_cms_client/services/client_store_service.dart';
 
 import '../../client.dart';
-import '../../models/page_models.dart';
+import '../../models/page_model.dart';
 
 final $pageManager = PagesManager();
 
@@ -14,7 +14,7 @@ class PagesManager {
     required ClientStoreService? storeService,
     Map<String, String>? queryParameters,
   }) async {
-    storeService != null ? _loadCachedPages(storeService) : null;
+    _loadCachedPages(storeService);
 
     final remotePages = await client.getPages(null);
     _pagesSignal.value = remotePages;
@@ -22,7 +22,9 @@ class PagesManager {
     await storeService?.savePages(pages);
   }
 
-  void _loadCachedPages(ClientStoreService store) {
+  void _loadCachedPages(ClientStoreService? store) {
+    if (store == null) return;
+
     try {
       final cachedPages = store.pages;
       if (cachedPages.isNotEmpty) {

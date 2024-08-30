@@ -22,7 +22,7 @@ class ExampleApp extends StatelessWidget {
         body: SafeArea(
           child: Column(
             children: [
-              PagesLoader(
+              PagesIndex(
                 client: StoryCMSClient(
                   NetworkService(http.Client()),
                   baseUrl: 'https://content.openthebible.org.uk/api/v1',

@@ -3,7 +3,7 @@ import 'dart:developer';
 
 import 'package:hive/hive.dart';
 
-import '../models/page_models.dart';
+import '../models/page_model.dart';
 
 enum Keys {
   /// List of [PageModel]

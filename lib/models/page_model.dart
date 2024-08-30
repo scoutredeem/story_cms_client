@@ -82,7 +82,7 @@ class PageModel {
   @override
   String toString() {
     return 'PageModel(title: $title, description: $description, icon: '
-    '$icon, body: $body, group: $group, category: $category)';
+        '$icon, body: $body, group: $group, category: $category)';
   }
 
   @override

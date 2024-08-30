@@ -5,16 +5,8 @@ import 'package:http/http.dart' as http;
 
 import '../exceptions/network_exception.dart';
 
-extension ResponseX on http.Response {
-  bool get isOk {
-    return (statusCode ~/ 100) == 2;
-  }
-}
-
 class NetworkService {
   static const defaultTimeout = Duration(seconds: 20);
-  static const noInternetStatusCode = 0;
-  static const noInternetMessage = 'Please check your internet connection';
 
   final http.Client client;
   NetworkService(this.client);
@@ -26,41 +18,33 @@ class NetworkService {
     try {
       final response =
           await client.get(uri, headers: headers).timeout(defaultTimeout);
-      if (response.isOk) {
-        return jsonDecode(response.body);
-      } else {
-        throw NetworkException(response.body, response.statusCode);
-      }
+      return _getBody(response);
     } catch (e) {
       log('Error in GET request to ${uri.toString()}: $e');
       // check if the error is network exception
       if (e.toString().contains('Failed host lookup')) {
-        throw NetworkException(noInternetMessage, noInternetStatusCode);
+        throw NetworkException.noNetwork();
       }
       rethrow;
     }
   }
 
-  /// Makes a POST request to the given endpoint
-  Future<Map<String, dynamic>> post(Uri uri,
-      {Map<String, String>? headers, String? body}) async {
-    log('POST request to $uri');
-    try {
-      final response = await client
-          .post(uri, headers: headers, body: body)
-          .timeout(defaultTimeout);
-      if (response.isOk) {
-        return jsonDecode(response.body);
-      } else {
-        throw NetworkException(response.body, response.statusCode);
-      }
-    } catch (e) {
-      log('Error in POST request to ${uri.toString()}: $e');
-      // check if the error is network exception
-      if (e.toString().contains('Failed host lookup')) {
-        throw NetworkException(noInternetMessage, noInternetStatusCode);
-      }
-      rethrow;
+  Map<String, dynamic> _getBody(http.Response response) {
+    if (!response.isOk) {
+      throw NetworkException(response.body, response.statusCode);
     }
+
+    if (response.body.isEmpty) return {};
+
+    final body = jsonDecode(response.body);
+    if (body is List) return {'data': body};
+
+    return body as Map<String, dynamic>;
+  }
+}
+
+extension ResponseX on http.Response {
+  bool get isOk {
+    return (statusCode ~/ 100) == 2;
   }
 }

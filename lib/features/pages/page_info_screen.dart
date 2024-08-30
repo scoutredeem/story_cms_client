@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:story_cms_client/models/page_models.dart';
+import 'package:story_cms_client/models/page_model.dart';
 
 class PageInfoScreen extends StatelessWidget {
   final PageModel page;

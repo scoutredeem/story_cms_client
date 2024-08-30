@@ -1,4 +1,4 @@
-import 'models/page_models.dart';
+import 'models/page_model.dart';
 import 'services/network_service.dart';
 
 abstract class CMSClient {
