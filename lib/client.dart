@@ -19,8 +19,9 @@ class StoryCMSClient implements CMSClient {
 
   @override
   Future<List<PageModel>> getPages(Map<String, String>? queryParameters) async {
-    final uri = Uri.parse('$baseUrl/page')
-      ..replace(queryParameters: queryParameters);
+    final uri = Uri.parse('$baseUrl/page').replace(
+      queryParameters: queryParameters,
+    );
 
     final data = await _networkService.get(uri);
     return data['pages']

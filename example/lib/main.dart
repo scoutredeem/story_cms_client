@@ -27,6 +27,9 @@ class ExampleApp extends StatelessWidget {
                   NetworkService(http.Client()),
                   baseUrl: 'https://content.openthebible.org.uk/api/v1',
                 ),
+                queryParameters: const {
+                  'locale': 'en',
+                },
                 storeService: ClientStoreService(box),
                 builder: (context, groupedPages, onPageSelected) {
                   return Column(

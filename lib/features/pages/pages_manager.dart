@@ -16,7 +16,7 @@ class PagesManager {
   }) async {
     _loadCachedPages(storeService);
 
-    final remotePages = await client.getPages(null);
+    final remotePages = await client.getPages(queryParameters);
     _pagesSignal.value = remotePages;
 
     await storeService?.savePages(pages);

@@ -91,7 +91,17 @@ class _PagesIndexState extends State<PagesIndex> {
     $pageManager.onPageSelected(page);
 
     if (page.isExternal) {
-      await launchExternalUri(page.externalUri);
+      final isPdf = page.externalUri.toString().contains('.pdf');
+      Uri uri = page.externalUri;
+      if (isPdf) {
+        // On android, the browser downloads the pdf instead of opening it
+        // this embeds the pdf in a google docs viewer
+        uri = Uri.parse(
+          'https://docs.google.com/gview?embedded=true&url=${Uri.encodeQueryComponent(page.externalUri.toString())}',
+        );
+      }
+
+      await launchExternalUri(uri);
       return;
     }
 
