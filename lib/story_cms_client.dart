@@ -1,5 +1,3 @@
-library story_cms_client;
-
 export './client.dart';
 export 'features/pages/pages_index.dart';
 export 'models/page_model.dart';

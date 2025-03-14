@@ -3,27 +3,32 @@ import 'package:story_cms_client/models/page_model.dart';
 
 class PageInfoScreen extends StatelessWidget {
   final PageModel page;
+  final Widget Function(BuildContext context, String title)? titleBuilder;
   final Widget Function(BuildContext context, String text) bodyBuilder;
   const PageInfoScreen({
     super.key,
     required this.page,
     required this.bodyBuilder,
+    this.titleBuilder,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(page.title),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
+      appBar: (titleBuilder == null)
+          ? AppBar(
+              title: Text(page.title),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            )
+          : null,
       body: Column(
         children: [
+          if (titleBuilder != null) titleBuilder!(context, page.title),
           Expanded(
             child: SingleChildScrollView(
               child: Column(

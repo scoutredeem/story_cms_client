@@ -40,6 +40,9 @@ class PagesIndex extends StatefulWidget {
   /// Page info body builder
   final Widget Function(BuildContext context, String text) infoBodyBuilder;
 
+  /// Page info title builder
+  final Widget Function(BuildContext context, String title)? titleBuilder;
+
   const PagesIndex({
     super.key,
     required this.builder,
@@ -51,6 +54,7 @@ class PagesIndex extends StatefulWidget {
     this.loadingWidget = const Center(
       child: CircularProgressIndicator(),
     ),
+    this.titleBuilder,
   });
 
   @override
@@ -115,6 +119,7 @@ class _PagesIndexState extends State<PagesIndex> {
           return PageInfoScreen(
             page: page,
             bodyBuilder: widget.infoBodyBuilder,
+            titleBuilder: widget.titleBuilder,
           );
         },
       ),
