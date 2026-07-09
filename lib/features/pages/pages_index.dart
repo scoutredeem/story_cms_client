@@ -1,5 +1,7 @@
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -9,6 +11,7 @@ import '../../models/page_model.dart';
 import '../../services/client_store_service.dart';
 import 'page_info_screen.dart';
 import 'pages_manager.dart';
+import 'pdf_viewer_screen.dart';
 
 typedef PagesLoaderBuilder = Widget Function(
   BuildContext context,
@@ -96,16 +99,29 @@ class _PagesIndexState extends State<PagesIndex> {
 
     if (page.isExternal) {
       final isPdf = page.externalUri.toString().contains('.pdf');
-      Uri uri = page.externalUri;
-      if (isPdf) {
-        // On android, the browser downloads the pdf instead of opening it
-        // this embeds the pdf in a google docs viewer
-        uri = Uri.parse(
-          'https://docs.google.com/gview?embedded=true&url=${Uri.encodeQueryComponent(page.externalUri.toString())}',
+
+      // flutter_pdfview only ships Android/iOS platform implementations;
+      // everywhere else falls back to the browser, which renders PDFs natively.
+      final supportsInAppPdf = !kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS);
+
+      if (isPdf && supportsInAppPdf) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) {
+              return PdfViewerScreen(
+                pdfUri: page.externalUri,
+                title: page.title,
+                titleBuilder: widget.titleBuilder,
+              );
+            },
+          ),
         );
+        return;
       }
 
-      await launchExternalUri(uri);
+      await launchExternalUri(page.externalUri);
       return;
     }
 
