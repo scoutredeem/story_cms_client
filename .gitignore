@@ -27,6 +27,7 @@ migrate_working_dir/
 **/doc/api/
 .dart_tool/
 build/
+.flutter-plugins-dependencies
 
 # Hive boxes opened by tests (test/*_test.dart with Hive.openBox(..., path: './test'))
 test/*.hive
