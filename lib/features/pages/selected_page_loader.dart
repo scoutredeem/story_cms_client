@@ -18,14 +18,16 @@ class SelectedPageLoader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Watch((_) {
-      final page = $pageManager.selectedPage;
+    return SignalBuilder(
+      builder: (context) {
+        final page = $pageManager.selectedPage;
 
-      if (page == null) {
-        return nullWidget;
-      }
+        if (page == null) {
+          return nullWidget;
+        }
 
-      return builder(context, page);
-    });
+        return builder(context, page);
+      },
+    );
   }
 }
