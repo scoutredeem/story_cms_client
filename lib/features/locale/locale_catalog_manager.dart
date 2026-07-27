@@ -13,18 +13,10 @@ import '../../services/client_store_service.dart';
 /// metadata array — this is now the single source of "which locales exist
 /// and what are they called," including locales never bundled in the app.
 class LocaleCatalogManager {
-  /// The set of locale codes the host app ships an `AppLocalizations`
-  /// delegate for (i.e. has an ARB file for), passed in by the app at init
-  /// since the package itself has no knowledge of the app's bundled locales.
-  Set<String> _bundledLocales = {};
-
   Future<void> init({
     required CMSClient client,
     required ClientStoreService? storeService,
-    required Set<String> bundledLocales,
   }) async {
-    _bundledLocales = bundledLocales;
-
     _loadCachedLocales(storeService);
 
     try {
@@ -52,13 +44,7 @@ class LocaleCatalogManager {
   final _localesSignal = Signal<List<LocaleItem>>([]);
   List<LocaleItem> get locales => _localesSignal.value;
 
-  /// Whether [locale] is one the host app ships a generated
-  /// `AppLocalizations` delegate for. `false` means the locale was
-  /// introduced purely via the CMS and has no compiled-in resources.
-  bool isBundled(String locale) => _bundledLocales.contains(locale);
-
   void dispose() {
     _localesSignal.value = [];
-    _bundledLocales = {};
   }
 }

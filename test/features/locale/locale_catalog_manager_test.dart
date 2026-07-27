@@ -62,11 +62,7 @@ void main() {
       await storeService.saveLocales([_en]);
       client.localesToReturn = [_en, _ku];
 
-      await manager.init(
-        client: client,
-        storeService: storeService,
-        bundledLocales: {'en'},
-      );
+      await manager.init(client: client, storeService: storeService);
 
       expect(manager.locales, [_en, _ku]);
       expect(storeService.locales, [_en, _ku]);
@@ -79,31 +75,9 @@ void main() {
       await storeService.saveLocales([_en]);
       client.errorToThrow = Exception('network down');
 
-      await manager.init(
-        client: client,
-        storeService: storeService,
-        bundledLocales: {'en'},
-      );
+      await manager.init(client: client, storeService: storeService);
 
       expect(manager.locales, [_en]);
-    },
-  );
-
-  test(
-    'isBundled reflects the bundledLocales passed to init, not the fetched catalog',
-    () async {
-      client.localesToReturn = [_en, _ku];
-
-      await manager.init(
-        client: client,
-        storeService: storeService,
-        bundledLocales: {'en'},
-      );
-
-      expect(manager.isBundled('en'), isTrue);
-      // ku is in the CMS catalog but the app has no bundled ARB for it.
-      expect(manager.isBundled('ku'), isFalse);
-      expect(manager.isBundled('never-heard-of-it'), isFalse);
     },
   );
 }

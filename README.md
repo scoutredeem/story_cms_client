@@ -188,16 +188,16 @@ stringsManager.overrides; // Map<String, String>, Signal-backed
 final localeCatalogManager = LocaleCatalogManager();
 await localeCatalogManager.init(
   client: client,
-  storeService: clientStoreService,
-  // Locale codes the host app ships an AppLocalizations delegate for. The
-  // package has no notion of "bundled" on its own - the app must pass its
-  // own set (e.g. AppLocalizations.supportedLocales.map((l) => l.languageCode)).
-  bundledLocales: {'en', 'ar', 'fr'},
+  storeService: clientStoreService, // nullable - pass null to skip caching
 );
 localeCatalogManager.locales; // List<LocaleItem>, Signal-backed
-localeCatalogManager.isBundled('en'); // true
-localeCatalogManager.isBundled('xx'); // false - CMS-only locale, no ARB
 ```
+
+The package has no notion of "bundled" (i.e. which locales the host app ships
+a generated `AppLocalizations` delegate for) - that's app-specific and the
+package doesn't need to know it. If your fallback logic needs that check,
+compute it app-side against `AppLocalizations.supportedLocales` instead of
+threading it through the manager - see the `_fallback` getter below.
 
 Both are meant to be registered once as singletons (GetIt or similar) by the
 host app, not instantiated per-widget.
@@ -255,12 +255,20 @@ a new app (e.g. BNAP):
      }
 
      // Bundled locale -> that locale's own generated AppLocalizations value.
-     // Unbundled locale (CMS-only) -> the default locale's (en) value. Never
-     // calls AppLocalizations.of(context) for an unbundled locale - there is
-     // no generated delegate for it, so that call would throw.
-     AppLocalizations get _fallback => get<LocaleCatalogManager>().isBundled(_locale)
-         ? AppLocalizations.of(_context)!
-         : lookupAppLocalizations(const Locale('en'));
+     // Unbundled locale (CMS-only, no generated delegate) -> the default
+     // locale's (en) value. "Bundled" is checked app-side against
+     // AppLocalizations.supportedLocales - the package has no notion of it.
+     // AppLocalizations.of(context) is nullable, so a stale/mismatched
+     // context also degrades to the default instead of throwing.
+     AppLocalizations get _fallback =>
+         AppLocalizations.supportedLocales
+             .map((locale) => locale.languageCode)
+             .contains(_locale)
+         ? AppLocalizations.of(_context) ?? _defaultFallback
+         : _defaultFallback;
+
+     AppLocalizations get _defaultFallback =>
+         lookupAppLocalizations(const Locale('en'));
    }
 
    extension StringsContext on BuildContext {
