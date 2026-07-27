@@ -105,10 +105,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
               const SizedBox(height: 16),
               const Text("Couldn't load PDF"),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _load,
-                child: const Text('Retry'),
-              ),
+              ElevatedButton(onPressed: _load, child: const Text('Retry')),
               TextButton(
                 onPressed: () => launchExternalUri(
                   widget.pdfUri,

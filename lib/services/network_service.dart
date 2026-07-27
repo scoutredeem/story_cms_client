@@ -12,12 +12,15 @@ class NetworkService {
   NetworkService(this.client);
 
   /// Makes a GET request to the given endpoint
-  Future<Map<String, dynamic>> get(Uri uri,
-      {Map<String, String>? headers}) async {
+  Future<Map<String, dynamic>> get(
+    Uri uri, {
+    Map<String, String>? headers,
+  }) async {
     log('GET request to $uri');
     try {
-      final response =
-          await client.get(uri, headers: headers).timeout(defaultTimeout);
+      final response = await client
+          .get(uri, headers: headers)
+          .timeout(defaultTimeout);
       return _getBody(response);
     } catch (e) {
       log('Error in GET request to ${uri.toString()}: $e');

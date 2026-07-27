@@ -13,11 +13,12 @@ import 'page_info_screen.dart';
 import 'pages_manager.dart';
 import 'pdf_viewer_screen.dart';
 
-typedef PagesLoaderBuilder = Widget Function(
-  BuildContext context,
-  List<List<PageModel>> groupedPages,
-  void Function(PageModel page) onPageSelected,
-);
+typedef PagesLoaderBuilder =
+    Widget Function(
+      BuildContext context,
+      List<List<PageModel>> groupedPages,
+      void Function(PageModel page) onPageSelected,
+    );
 
 enum TapOption { navigate, select }
 
@@ -54,9 +55,7 @@ class PagesIndex extends StatefulWidget {
     this.queryParameters,
     this.storeService,
     this.tapOption = TapOption.navigate,
-    this.loadingWidget = const Center(
-      child: CircularProgressIndicator(),
-    ),
+    this.loadingWidget = const Center(child: CircularProgressIndicator()),
     this.titleBuilder,
   });
 
@@ -67,19 +66,21 @@ class PagesIndex extends StatefulWidget {
 class _PagesIndexState extends State<PagesIndex> {
   @override
   Widget build(BuildContext context) {
-    return Watch((_) {
-      final pages = $pageManager.pages;
+    return SignalBuilder(
+      builder: (context) {
+        final pages = $pageManager.pages;
 
-      if (pages.isEmpty) {
-        return widget.loadingWidget;
-      }
+        if (pages.isEmpty) {
+          return widget.loadingWidget;
+        }
 
-      return widget.builder(
-        context,
-        _getGroupedPages(pages),
-        _onPageSelected,
-      );
-    });
+        return widget.builder(
+          context,
+          _getGroupedPages(pages),
+          _onPageSelected,
+        );
+      },
+    );
   }
 
   List<List<PageModel>> _getGroupedPages(List<PageModel> pages) {
@@ -102,7 +103,8 @@ class _PagesIndexState extends State<PagesIndex> {
 
       // flutter_pdfview only ships Android/iOS platform implementations;
       // everywhere else falls back to the browser, which renders PDFs natively.
-      final supportsInAppPdf = !kIsWeb &&
+      final supportsInAppPdf =
+          !kIsWeb &&
           (defaultTargetPlatform == TargetPlatform.android ||
               defaultTargetPlatform == TargetPlatform.iOS);
 
@@ -164,7 +166,8 @@ Future<void> launchExternalUri(Uri uri, {LaunchMode? launchMode}) async {
   if (await canLaunchUrl(uri)) {
     await launchUrl(
       uri,
-      mode: launchMode ??
+      mode:
+          launchMode ??
           (uri.toString().startsWith('mailto:')
               ? LaunchMode.externalApplication
               : LaunchMode.inAppBrowserView),
