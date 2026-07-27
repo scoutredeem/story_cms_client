@@ -43,6 +43,9 @@ class StoryCMSClient implements CMSClient {
 
   @override
   Future<Map<String, String>> getStrings({required String locale}) async {
+    if (locale == 'en') {
+      throw UnimplementedError('English strings are not supported yet');
+    }
     // `/ui/v1/translation` lives outside the `/api/v1` prefix baked into
     // [baseUrl], so keep the origin but replace the path entirely.
     final uri = Uri.parse(
