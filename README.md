@@ -156,9 +156,14 @@ GET {baseUrl}/locale
 }
 ```
 
-`getLocales()` returns the `app` array, parsed into `LocaleItem`s. This is
-picker metadata (locale code, display name, native name, text direction),
-independent of which locales have published story content.
+`getLocales()` returns a single `LocaleItem` mirroring this shape: `app` (a
+`List<AppLocale>` - picker metadata: locale code, display name, native name,
+text direction) and `content` (a `List<ContentLocale>` - which story slugs,
+e.g. `"classic"`/`"express"`/`"youth"`/`"daily-devotion"`, the CMS has published per locale).
+The two arrays are independent and are **not** joined/merged by this
+package - a locale can appear in one without the other (e.g. a locale with
+picker metadata but zero published stories yet), and callers search
+whichever list they care about.
 
 ### Client API
 
@@ -166,7 +171,9 @@ independent of which locales have published story content.
 final client = StoryCMSClient(networkService, baseUrl: baseUrl);
 
 Map<String, String> overrides = await client.getStrings(locale: 'ar');
-List<LocaleItem> locales = await client.getLocales();
+LocaleItem catalog = await client.getLocales();
+catalog.app;     // List<AppLocale>
+catalog.content; // List<ContentLocale>
 ```
 
 ### Managers
@@ -188,16 +195,16 @@ stringsManager.overrides; // Map<String, String>, Signal-backed
 final localeCatalogManager = LocaleCatalogManager();
 await localeCatalogManager.init(
   client: client,
-  storeService: clientStoreService,
-  // Locale codes the host app ships an AppLocalizations delegate for. The
-  // package has no notion of "bundled" on its own - the app must pass its
-  // own set (e.g. AppLocalizations.supportedLocales.map((l) => l.languageCode)).
-  bundledLocales: {'en', 'ar', 'fr'},
+  storeService: clientStoreService, // nullable - pass null to skip caching
 );
-localeCatalogManager.locales; // List<LocaleItem>, Signal-backed
-localeCatalogManager.isBundled('en'); // true
-localeCatalogManager.isBundled('xx'); // false - CMS-only locale, no ARB
+localeCatalogManager.catalog; // LocaleItem?, Signal-backed - null until first fetch/cache load
 ```
+
+The package has no notion of "bundled" (i.e. which locales the host app ships
+a generated `AppLocalizations` delegate for) - that's app-specific and the
+package doesn't need to know it. If your fallback logic needs that check,
+compute it app-side against `AppLocalizations.supportedLocales` instead of
+threading it through the manager - see the `_fallback` getter below.
 
 Both are meant to be registered once as singletons (GetIt or similar) by the
 host app, not instantiated per-widget.
@@ -205,8 +212,8 @@ host app, not instantiated per-widget.
 ### Cache
 
 `ClientStoreService` gained two Hive-backed keys: `Keys.strings` (the
-override map, JSON-encoded) and `Keys.locales` (the locale catalog,
-JSON-encoded list). Same box as pages - no new Hive box required.
+override map, JSON-encoded) and `Keys.localeCatalog` (the `LocaleItem`
+catalog, JSON-encoded). Same box as pages - no new Hive box required.
 
 ## App-side conventions
 
@@ -255,12 +262,20 @@ a new app (e.g. BNAP):
      }
 
      // Bundled locale -> that locale's own generated AppLocalizations value.
-     // Unbundled locale (CMS-only) -> the default locale's (en) value. Never
-     // calls AppLocalizations.of(context) for an unbundled locale - there is
-     // no generated delegate for it, so that call would throw.
-     AppLocalizations get _fallback => get<LocaleCatalogManager>().isBundled(_locale)
-         ? AppLocalizations.of(_context)!
-         : lookupAppLocalizations(const Locale('en'));
+     // Unbundled locale (CMS-only, no generated delegate) -> the default
+     // locale's (en) value. "Bundled" is checked app-side against
+     // AppLocalizations.supportedLocales - the package has no notion of it.
+     // AppLocalizations.of(context) is nullable, so a stale/mismatched
+     // context also degrades to the default instead of throwing.
+     AppLocalizations get _fallback =>
+         AppLocalizations.supportedLocales
+             .map((locale) => locale.languageCode)
+             .contains(_locale)
+         ? AppLocalizations.of(_context) ?? _defaultFallback
+         : _defaultFallback;
+
+     AppLocalizations get _defaultFallback =>
+         lookupAppLocalizations(const Locale('en'));
    }
 
    extension StringsContext on BuildContext {
@@ -309,8 +324,8 @@ a new app (e.g. BNAP):
    **not** on app resume - a changed string can wait for the next full
    launch; this is a lighter-weight signal than story content.
 
-5. **Language picker** - prefer `LocaleCatalogManager.locales`, but fall back
-   to the app's bundled/hardcoded language list when the catalog is empty
+5. **Language picker** - prefer `LocaleCatalogManager.catalog?.app`, but fall
+   back to the app's bundled/hardcoded language list when the catalog is empty
    (cold start with no cache yet, or before the CMS backend ships the
    `/locale` endpoint). An empty picker is a worse failure mode than a
    momentarily-stale one.

@@ -13,15 +13,16 @@ enum LanguageDirection {
   }
 }
 
-/// Represents a locale the CMS knows about, as returned by `GET /locale`'s
-/// `app` array — the picker metadata (code, display names, direction).
-class LocaleItem {
+/// A locale from `GET /locale`'s `app` array - the picker metadata (code,
+/// display names, direction), independent of which locales have published
+/// story content (see [ContentLocale] for that).
+class AppLocale {
   final String locale;
   final String name;
   final String nativeName;
   final LanguageDirection languageDirection;
 
-  LocaleItem({
+  AppLocale({
     required this.locale,
     required this.name,
     required this.nativeName,
@@ -37,8 +38,8 @@ class LocaleItem {
     };
   }
 
-  factory LocaleItem.fromMap(Map<String, dynamic> map) {
-    return LocaleItem(
+  factory AppLocale.fromMap(Map<String, dynamic> map) {
+    return AppLocale(
       locale: map['locale'] as String,
       name: (map['name'] ?? '') as String,
       nativeName: (map['nativeName'] ?? '') as String,
@@ -50,17 +51,17 @@ class LocaleItem {
 
   String toJson() => json.encode(toMap());
 
-  factory LocaleItem.fromJson(String source) =>
-      LocaleItem.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory AppLocale.fromJson(String source) =>
+      AppLocale.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
   String toString() {
-    return 'LocaleItem(locale: $locale, name: $name, nativeName: $nativeName, '
+    return 'AppLocale(locale: $locale, name: $name, nativeName: $nativeName, '
         'languageDirection: $languageDirection)';
   }
 
   @override
-  bool operator ==(covariant LocaleItem other) {
+  bool operator ==(covariant AppLocale other) {
     if (identical(this, other)) return true;
 
     return other.locale == locale &&

@@ -2,7 +2,7 @@ export './client.dart';
 export 'features/locale/locale_catalog_manager.dart';
 export 'features/pages/pages_index.dart';
 export 'features/strings/strings_manager.dart';
-export 'models/locale_item_model.dart';
+export 'models/locale_catalog_model.dart';
 export 'models/page_model.dart';
 export './services/network_service.dart';
 export 'features/pages/selected_page_loader.dart';

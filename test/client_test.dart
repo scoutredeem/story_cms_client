@@ -4,39 +4,42 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:story_cms_client/client.dart';
-import 'package:story_cms_client/models/locale_item_model.dart';
+import 'package:story_cms_client/models/locale_catalog_model.dart';
 import 'package:story_cms_client/services/network_service.dart';
 
 void main() {
   group('StoryCMSClient.getStrings', () {
-    test(
-      'hits /ui/v1/translation with locale as a query parameter and strips ARB metadata',
-      () async {
-        Uri? requestedUri;
-        final mockClient = MockClient((request) async {
-          requestedUri = request.url;
-          return http.Response(
-            jsonEncode({
-              '@@locale': 'ar',
-              'welcomeMessage': 'Hi',
-              'loginButton': 'Log in',
-            }),
-            200,
-          );
-        });
-
-        final client = StoryCMSClient(
-          NetworkService(mockClient),
-          baseUrl: 'https://example.com/api/v1',
+    test('hits /ui/v1/translation with locale as a query parameter, strips ARB '
+        'metadata but keeps @@locale', () async {
+      Uri? requestedUri;
+      final mockClient = MockClient((request) async {
+        requestedUri = request.url;
+        return http.Response(
+          jsonEncode({
+            '@@locale': 'ar',
+            '@welcomeMessage': {'description': 'greeting'},
+            'welcomeMessage': 'Hi',
+            'loginButton': 'Log in',
+          }),
+          200,
         );
+      });
 
-        final strings = await client.getStrings(locale: 'ar');
+      final client = StoryCMSClient(
+        NetworkService(mockClient),
+        baseUrl: 'https://example.com/api/v1',
+      );
 
-        expect(requestedUri?.path, '/ui/v1/translation');
-        expect(requestedUri?.queryParameters, {'locale': 'ar'});
-        expect(strings, {'welcomeMessage': 'Hi', 'loginButton': 'Log in'});
-      },
-    );
+      final strings = await client.getStrings(locale: 'ar');
+
+      expect(requestedUri?.path, '/ui/v1/translation');
+      expect(requestedUri?.queryParameters, {'locale': 'ar'});
+      expect(strings, {
+        '@@locale': 'ar',
+        'welcomeMessage': 'Hi',
+        'loginButton': 'Log in',
+      });
+    });
 
     test('returns an empty map when the response body is empty', () async {
       final mockClient = MockClient((request) async {
@@ -48,14 +51,32 @@ void main() {
         baseUrl: 'https://example.com/api/v1',
       );
 
-      final strings = await client.getStrings(locale: 'en');
+      final strings = await client.getStrings(locale: 'fr');
 
       expect(strings, <String, String>{});
+    });
+
+    test('throws UnimplementedError for locale "en" without hitting the '
+        'network - the CMS has no override endpoint data for the ARB '
+        'baseline language', () async {
+      final mockClient = MockClient((request) async {
+        fail('should not make a network request for locale "en"');
+      });
+
+      final client = StoryCMSClient(
+        NetworkService(mockClient),
+        baseUrl: 'https://example.com/api/v1',
+      );
+
+      expect(
+        () => client.getStrings(locale: 'en'),
+        throwsA(isA<UnimplementedError>()),
+      );
     });
   });
 
   group('StoryCMSClient.getLocales', () {
-    test('parses the app array into LocaleItems', () async {
+    test('parses the app and content arrays independently', () async {
       Uri? requestedUri;
       final mockClient = MockClient((request) async {
         requestedUri = request.url;
@@ -65,6 +86,10 @@ void main() {
               'content': [
                 {
                   'locale': 'en',
+                  'stories': ['classic', 'express', 'youth'],
+                },
+                {
+                  'locale': 'de',
                   'stories': ['classic'],
                 },
               ],
@@ -94,23 +119,43 @@ void main() {
         baseUrl: 'https://example.com/api/v1',
       );
 
-      final locales = await client.getLocales();
+      final catalog = await client.getLocales();
 
       expect(requestedUri?.path, '/api/v1/locale');
-      expect(locales, [
-        LocaleItem(
+      expect(catalog.app, [
+        AppLocale(
           locale: 'en',
           name: 'English',
           nativeName: 'English',
           languageDirection: LanguageDirection.ltr,
         ),
-        LocaleItem(
+        AppLocale(
           locale: 'ar',
           name: 'Arabic',
           nativeName: 'العربية',
           languageDirection: LanguageDirection.rtl,
         ),
       ]);
+      expect(catalog.content, [
+        ContentLocale(locale: 'en', stories: ['classic', 'express', 'youth']),
+        ContentLocale(locale: 'de', stories: ['classic']),
+      ]);
+    });
+
+    test('missing app/content arrays parse as empty lists', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response(jsonEncode({}), 200);
+      });
+
+      final client = StoryCMSClient(
+        NetworkService(mockClient),
+        baseUrl: 'https://example.com/api/v1',
+      );
+
+      final catalog = await client.getLocales();
+
+      expect(catalog.app, <AppLocale>[]);
+      expect(catalog.content, <ContentLocale>[]);
     });
   });
 }

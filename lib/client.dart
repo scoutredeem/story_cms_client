@@ -1,4 +1,4 @@
-import 'models/locale_item_model.dart';
+import 'models/locale_catalog_model.dart';
 import 'models/page_model.dart';
 import 'services/network_service.dart';
 
@@ -17,9 +17,10 @@ abstract class CMSClient {
   /// for any key not present in the returned map.
   Future<Map<String, String>> getStrings({required String locale});
 
-  /// Fetches the catalog of locales the CMS knows about (for the language
-  /// picker), including locales never bundled in the app's own ARB files.
-  Future<List<LocaleItem>> getLocales();
+  /// Fetches the CMS's locale catalog: `app` (picker metadata - name,
+  /// nativeName, direction - for locales never bundled in the app's own ARB
+  /// files) and `content` (which story slugs are published per locale).
+  Future<LocaleCatalog> getLocales();
 }
 
 class StoryCMSClient implements CMSClient {
@@ -55,22 +56,23 @@ class StoryCMSClient implements CMSClient {
     final data = await _networkService.get(uri);
     // The endpoint returns a full ARB file (flat key/value, plus ARB
     // metadata keys like `@@locale` prefixed with `@`) rather than a
-    // `{"strings": {...}}` override map, so filter those out.
+    // `{"strings": {...}}` override map, so filter those out - except
+    // `@@locale`, which StringsManager keeps to confirm the response
+    // actually matches the requested locale before applying it.
     return Map.fromEntries(
       data.entries
-          .where((entry) => !entry.key.startsWith('@'))
+          .where(
+            (entry) => entry.key == '@@locale' || !entry.key.startsWith('@'),
+          )
           .map((entry) => MapEntry(entry.key, entry.value.toString())),
     );
   }
 
   @override
-  Future<List<LocaleItem>> getLocales() async {
+  Future<LocaleCatalog> getLocales() async {
     final uri = Uri.parse('$baseUrl/locale');
 
     final data = await _networkService.get(uri);
-    return (data['app'] as List<dynamic>? ?? [])
-        .cast<Map<String, dynamic>>()
-        .map<LocaleItem>(LocaleItem.fromMap)
-        .toList();
+    return LocaleCatalog.fromMap(data);
   }
 }

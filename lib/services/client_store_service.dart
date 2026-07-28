@@ -3,7 +3,7 @@ import 'dart:developer';
 
 import 'package:hive_ce/hive.dart';
 
-import '../models/locale_item_model.dart';
+import '../models/locale_catalog_model.dart';
 import '../models/page_model.dart';
 
 enum Keys {
@@ -13,8 +13,8 @@ enum Keys {
   /// Map of interface string key -> override value
   strings,
 
-  /// List of [LocaleItem]
-  locales,
+  /// The [LocaleCatalog] catalog (app + content arrays)
+  localeCatalog,
 }
 
 class ClientStoreService {
@@ -55,57 +55,62 @@ class ClientStoreService {
   // ------------------------------------
   // Strings
   // ------------------------------------
-  Map<String, String> get strings {
-    final strings = box.get(Keys.strings.toString());
 
-    if (strings == null) {
-      return {};
-    }
+  /// The last-cached interface-string overrides, tagged with the locale
+  /// they belong to - null if nothing is cached or the cache is unreadable.
+  /// Tagging the locale lets callers refuse to apply this cache when it
+  /// belongs to a different locale than the one currently requested (see
+  /// StringsManager), instead of leaking a stale locale's strings.
+  ({String locale, Map<String, String> overrides})? get cachedStrings {
+    final raw = box.get(Keys.strings.toString());
+    if (raw == null) return null;
 
     try {
-      return (jsonDecode(strings) as Map).cast<String, String>();
+      final decoded = jsonDecode(raw) as Map;
+      return (
+        locale: decoded['locale'] as String,
+        overrides: (decoded['overrides'] as Map).cast<String, String>(),
+      );
     } catch (e) {
       log('Error while parsing strings: $e');
-      return {};
+      return null;
     }
   }
 
-  Future<void> saveStrings(Map<String, String> strings) async {
+  Future<void> saveStrings(String locale, Map<String, String> overrides) async {
     try {
-      await box.put(Keys.strings.toString(), jsonEncode(strings));
+      await box.put(
+        Keys.strings.toString(),
+        jsonEncode({'locale': locale, 'overrides': overrides}),
+      );
     } catch (e) {
       log('Error while saving strings: $e');
     }
   }
 
   // ------------------------------------
-  // Locales
+  // Locale catalog
   // ------------------------------------
-  List<LocaleItem> get locales {
-    final locales = box.get(Keys.locales.toString());
+  LocaleCatalog? get localeCatalog {
+    final catalog = box.get(Keys.localeCatalog.toString());
 
-    if (locales == null) {
-      return [];
+    if (catalog == null) {
+      return null;
     }
 
     try {
-      return (jsonDecode(locales) as List)
-          .map<LocaleItem>((e) => LocaleItem.fromJson(e))
-          .toList();
+      return LocaleCatalog.fromJson(catalog);
     } catch (e) {
-      log('Error while parsing locales: $e');
-      return [];
+      log('Error while parsing locale catalog: $e');
+      return null;
     }
   }
 
-  Future<void> saveLocales(List<LocaleItem> locales) async {
+  Future<void> saveLocaleCatalog(LocaleCatalog catalog) async {
     try {
-      await box.put(
-        Keys.locales.toString(),
-        jsonEncode(locales.map((e) => e.toJson()).toList()),
-      );
+      await box.put(Keys.localeCatalog.toString(), catalog.toJson());
     } catch (e) {
-      log('Error while saving locales: $e');
+      log('Error while saving locale catalog: $e');
     }
   }
 }

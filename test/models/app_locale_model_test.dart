@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:story_cms_client/models/locale_item_model.dart';
+import 'package:story_cms_client/models/app_locale_model.dart';
 
 void main() {
-  group('LocaleItem', () {
+  group('AppLocale', () {
     test('fromMap parses languageDirection', () {
-      final item = LocaleItem.fromMap({
+      final item = AppLocale.fromMap({
         'locale': 'ar',
         'name': 'Arabic',
         'nativeName': 'العربية',
@@ -18,20 +18,20 @@ void main() {
     });
 
     test('toJson/fromJson round-trips', () {
-      final item = LocaleItem(
+      final item = AppLocale(
         locale: 'en',
         name: 'English',
         nativeName: 'English',
         languageDirection: LanguageDirection.ltr,
       );
 
-      final restored = LocaleItem.fromJson(item.toJson());
+      final restored = AppLocale.fromJson(item.toJson());
 
       expect(restored, item);
     });
 
     test('unknown languageDirection falls back to ltr', () {
-      final item = LocaleItem.fromMap({
+      final item = AppLocale.fromMap({
         'locale': 'en',
         'name': 'English',
         'nativeName': 'English',

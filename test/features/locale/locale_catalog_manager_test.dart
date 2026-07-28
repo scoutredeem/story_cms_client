@@ -2,18 +2,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:story_cms_client/client.dart';
 import 'package:story_cms_client/features/locale/locale_catalog_manager.dart';
-import 'package:story_cms_client/models/locale_item_model.dart';
+import 'package:story_cms_client/models/locale_catalog_model.dart';
 import 'package:story_cms_client/models/page_model.dart';
 import 'package:story_cms_client/services/client_store_service.dart';
 
 class _FakeCMSClient implements CMSClient {
-  List<LocaleItem> localesToReturn = [];
+  LocaleCatalog catalogToReturn = LocaleCatalog(app: [], content: []);
   Object? errorToThrow;
 
   @override
-  Future<List<LocaleItem>> getLocales() async {
+  Future<LocaleCatalog> getLocales() async {
     if (errorToThrow != null) throw errorToThrow!;
-    return localesToReturn;
+    return catalogToReturn;
   }
 
   @override
@@ -25,13 +25,13 @@ class _FakeCMSClient implements CMSClient {
   ) async => [];
 }
 
-final _en = LocaleItem(
+final _en = AppLocale(
   locale: 'en',
   name: 'English',
   nativeName: 'English',
   languageDirection: LanguageDirection.ltr,
 );
-final _ku = LocaleItem(
+final _ku = AppLocale(
   locale: 'ku',
   name: 'Kurdish',
   nativeName: 'Kurdî',
@@ -59,51 +59,32 @@ void main() {
   test(
     'loads cached catalog immediately, then overwrites on fetch success',
     () async {
-      await storeService.saveLocales([_en]);
-      client.localesToReturn = [_en, _ku];
-
-      await manager.init(
-        client: client,
-        storeService: storeService,
-        bundledLocales: {'en'},
+      await storeService.saveLocaleCatalog(
+        LocaleCatalog(app: [_en], content: []),
       );
+      client.catalogToReturn = LocaleCatalog(app: [_en, _ku], content: []);
 
-      expect(manager.locales, [_en, _ku]);
-      expect(storeService.locales, [_en, _ku]);
+      await manager.init(client: client, storeService: storeService);
+
+      expect(manager.catalog, LocaleCatalog(app: [_en, _ku], content: []));
+      expect(
+        storeService.localeCatalog,
+        LocaleCatalog(app: [_en, _ku], content: []),
+      );
     },
   );
 
   test(
     'keeps the last cache and does not throw when the fetch fails',
     () async {
-      await storeService.saveLocales([_en]);
+      await storeService.saveLocaleCatalog(
+        LocaleCatalog(app: [_en], content: []),
+      );
       client.errorToThrow = Exception('network down');
 
-      await manager.init(
-        client: client,
-        storeService: storeService,
-        bundledLocales: {'en'},
-      );
+      await manager.init(client: client, storeService: storeService);
 
-      expect(manager.locales, [_en]);
-    },
-  );
-
-  test(
-    'isBundled reflects the bundledLocales passed to init, not the fetched catalog',
-    () async {
-      client.localesToReturn = [_en, _ku];
-
-      await manager.init(
-        client: client,
-        storeService: storeService,
-        bundledLocales: {'en'},
-      );
-
-      expect(manager.isBundled('en'), isTrue);
-      // ku is in the CMS catalog but the app has no bundled ARB for it.
-      expect(manager.isBundled('ku'), isFalse);
-      expect(manager.isBundled('never-heard-of-it'), isFalse);
+      expect(manager.catalog, LocaleCatalog(app: [_en], content: []));
     },
   );
 }

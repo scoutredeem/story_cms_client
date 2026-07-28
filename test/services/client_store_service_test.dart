@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:story_cms_client/models/locale_item_model.dart';
+import 'package:story_cms_client/models/locale_catalog_model.dart';
 import 'package:story_cms_client/services/client_store_service.dart';
 
 void main() {
@@ -18,35 +18,42 @@ void main() {
   });
 
   group('strings cache', () {
-    test('returns empty map when nothing cached', () {
-      expect(service.strings, <String, String>{});
+    test('returns null when nothing cached', () {
+      expect(service.cachedStrings, isNull);
     });
 
-    test('saves and reloads the override map', () async {
-      await service.saveStrings({'welcomeMessage': 'Hi there'});
+    test('saves and reloads the override map tagged with its locale', () async {
+      await service.saveStrings('fr', {'welcomeMessage': 'Bonjour'});
 
-      expect(service.strings, {'welcomeMessage': 'Hi there'});
+      final cached = service.cachedStrings;
+      expect(cached?.locale, 'fr');
+      expect(cached?.overrides, {'welcomeMessage': 'Bonjour'});
     });
   });
 
-  group('locales cache', () {
-    test('returns empty list when nothing cached', () {
-      expect(service.locales, <LocaleItem>[]);
+  group('locale catalog cache', () {
+    test('returns null when nothing cached', () {
+      expect(service.localeCatalog, isNull);
     });
 
     test('saves and reloads the locale catalog', () async {
-      final locales = [
-        LocaleItem(
-          locale: 'en',
-          name: 'English',
-          nativeName: 'English',
-          languageDirection: LanguageDirection.ltr,
-        ),
-      ];
+      final catalog = LocaleCatalog(
+        app: [
+          AppLocale(
+            locale: 'en',
+            name: 'English',
+            nativeName: 'English',
+            languageDirection: LanguageDirection.ltr,
+          ),
+        ],
+        content: [
+          ContentLocale(locale: 'en', stories: ['classic']),
+        ],
+      );
 
-      await service.saveLocales(locales);
+      await service.saveLocaleCatalog(catalog);
 
-      expect(service.locales, locales);
+      expect(service.localeCatalog, catalog);
     });
   });
 }
