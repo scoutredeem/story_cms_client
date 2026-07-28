@@ -3,11 +3,11 @@ import 'dart:developer';
 import 'package:signals/signals.dart';
 
 import '../../client.dart';
-import '../../models/locale_item_model.dart';
+import '../../models/locale_catalog_model.dart';
 import '../../services/client_store_service.dart';
 
 /// Mirrors [PagesManager]/[StringsManager]: exposes the CMS's locale catalog
-/// ([LocaleItem]'s `app` and `content` arrays) as a signal, sourced from
+/// ([LocaleCatalog]'s `app` and `content` arrays) as a signal, sourced from
 /// [CMSClient.getLocales], cache-then-refresh. Replaces the picker's old
 /// dependency on `AppLocalizations.supportedLocales` and a hardcoded
 /// metadata array — this is now the single source of "which locales exist
@@ -42,8 +42,8 @@ class LocaleCatalogManager {
     }
   }
 
-  final _catalogSignal = Signal<LocaleItem?>(null);
-  LocaleItem? get catalog => _catalogSignal.value;
+  final _catalogSignal = Signal<LocaleCatalog?>(null);
+  LocaleCatalog? get catalog => _catalogSignal.value;
 
   void dispose() {
     _catalogSignal.value = null;

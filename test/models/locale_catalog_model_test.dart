@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:story_cms_client/models/locale_item_model.dart';
+import 'package:story_cms_client/models/locale_catalog_model.dart';
 
 void main() {
-  group('LocaleItem', () {
+  group('LocaleCatalog', () {
     test('fromMap parses app and content independently', () {
-      final item = LocaleItem.fromMap({
+      final item = LocaleCatalog.fromMap({
         'app': [
           {
             'locale': 'en',
@@ -35,14 +35,14 @@ void main() {
     });
 
     test('missing app/content keys parse as empty lists', () {
-      final item = LocaleItem.fromMap({});
+      final item = LocaleCatalog.fromMap({});
 
       expect(item.app, <AppLocale>[]);
       expect(item.content, <ContentLocale>[]);
     });
 
     test('toJson/fromJson round-trips both lists, including when empty', () {
-      final item = LocaleItem(
+      final item = LocaleCatalog(
         app: [
           AppLocale(
             locale: 'en',
@@ -54,7 +54,7 @@ void main() {
         content: [],
       );
 
-      final restored = LocaleItem.fromJson(item.toJson());
+      final restored = LocaleCatalog.fromJson(item.toJson());
 
       expect(restored, item);
       expect(restored.content, <ContentLocale>[]);

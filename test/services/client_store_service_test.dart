@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:story_cms_client/models/locale_item_model.dart';
+import 'package:story_cms_client/models/locale_catalog_model.dart';
 import 'package:story_cms_client/services/client_store_service.dart';
 
 void main() {
@@ -37,7 +37,7 @@ void main() {
     });
 
     test('saves and reloads the locale catalog', () async {
-      final catalog = LocaleItem(
+      final catalog = LocaleCatalog(
         app: [
           AppLocale(
             locale: 'en',

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:story_cms_client/client.dart';
-import 'package:story_cms_client/models/locale_item_model.dart';
+import 'package:story_cms_client/models/locale_catalog_model.dart';
 import 'package:story_cms_client/services/network_service.dart';
 
 void main() {

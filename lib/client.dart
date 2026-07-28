@@ -1,4 +1,4 @@
-import 'models/locale_item_model.dart';
+import 'models/locale_catalog_model.dart';
 import 'models/page_model.dart';
 import 'services/network_service.dart';
 
@@ -20,7 +20,7 @@ abstract class CMSClient {
   /// Fetches the CMS's locale catalog: `app` (picker metadata - name,
   /// nativeName, direction - for locales never bundled in the app's own ARB
   /// files) and `content` (which story slugs are published per locale).
-  Future<LocaleItem> getLocales();
+  Future<LocaleCatalog> getLocales();
 }
 
 class StoryCMSClient implements CMSClient {
@@ -69,10 +69,10 @@ class StoryCMSClient implements CMSClient {
   }
 
   @override
-  Future<LocaleItem> getLocales() async {
+  Future<LocaleCatalog> getLocales() async {
     final uri = Uri.parse('$baseUrl/locale');
 
     final data = await _networkService.get(uri);
-    return LocaleItem.fromMap(data);
+    return LocaleCatalog.fromMap(data);
   }
 }

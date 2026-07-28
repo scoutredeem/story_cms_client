@@ -3,7 +3,7 @@ import 'dart:developer';
 
 import 'package:hive_ce/hive.dart';
 
-import '../models/locale_item_model.dart';
+import '../models/locale_catalog_model.dart';
 import '../models/page_model.dart';
 
 enum Keys {
@@ -13,7 +13,7 @@ enum Keys {
   /// Map of interface string key -> override value
   strings,
 
-  /// The [LocaleItem] catalog (app + content arrays)
+  /// The [LocaleCatalog] catalog (app + content arrays)
   localeCatalog,
 }
 
@@ -91,7 +91,7 @@ class ClientStoreService {
   // ------------------------------------
   // Locale catalog
   // ------------------------------------
-  LocaleItem? get localeCatalog {
+  LocaleCatalog? get localeCatalog {
     final catalog = box.get(Keys.localeCatalog.toString());
 
     if (catalog == null) {
@@ -99,14 +99,14 @@ class ClientStoreService {
     }
 
     try {
-      return LocaleItem.fromJson(catalog);
+      return LocaleCatalog.fromJson(catalog);
     } catch (e) {
       log('Error while parsing locale catalog: $e');
       return null;
     }
   }
 
-  Future<void> saveLocaleCatalog(LocaleItem catalog) async {
+  Future<void> saveLocaleCatalog(LocaleCatalog catalog) async {
     try {
       await box.put(Keys.localeCatalog.toString(), catalog.toJson());
     } catch (e) {

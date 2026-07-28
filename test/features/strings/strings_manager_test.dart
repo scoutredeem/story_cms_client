@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:story_cms_client/client.dart';
 import 'package:story_cms_client/features/strings/strings_manager.dart';
-import 'package:story_cms_client/models/locale_item_model.dart';
+import 'package:story_cms_client/models/locale_catalog_model.dart';
 import 'package:story_cms_client/models/page_model.dart';
 import 'package:story_cms_client/services/client_store_service.dart';
 
@@ -28,7 +28,8 @@ class _FakeCMSClient implements CMSClient {
   ) async => [];
 
   @override
-  Future<LocaleItem> getLocales() async => LocaleItem(app: [], content: []);
+  Future<LocaleCatalog> getLocales() async =>
+      LocaleCatalog(app: [], content: []);
 }
 
 void main() {

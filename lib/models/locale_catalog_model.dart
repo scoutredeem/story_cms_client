@@ -12,11 +12,11 @@ export 'content_locale_model.dart';
 /// this wrapper mirrors that shape 1:1 rather than joining them, so callers
 /// search whichever list they actually care about (see
 /// `LocaleCatalogManager.catalog`).
-class LocaleItem {
+class LocaleCatalog {
   final List<AppLocale> app;
   final List<ContentLocale> content;
 
-  LocaleItem({required this.app, required this.content});
+  LocaleCatalog({required this.app, required this.content});
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
@@ -25,8 +25,8 @@ class LocaleItem {
     };
   }
 
-  factory LocaleItem.fromMap(Map<String, dynamic> map) {
-    return LocaleItem(
+  factory LocaleCatalog.fromMap(Map<String, dynamic> map) {
+    return LocaleCatalog(
       app: (map['app'] as List<dynamic>? ?? [])
           .cast<Map<String, dynamic>>()
           .map(AppLocale.fromMap)
@@ -40,14 +40,14 @@ class LocaleItem {
 
   String toJson() => json.encode(toMap());
 
-  factory LocaleItem.fromJson(String source) =>
-      LocaleItem.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory LocaleCatalog.fromJson(String source) =>
+      LocaleCatalog.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
-  String toString() => 'LocaleItem(app: $app, content: $content)';
+  String toString() => 'LocaleCatalog(app: $app, content: $content)';
 
   @override
-  bool operator ==(covariant LocaleItem other) {
+  bool operator ==(covariant LocaleCatalog other) {
     if (identical(this, other)) return true;
 
     if (other.app.length != app.length) return false;
