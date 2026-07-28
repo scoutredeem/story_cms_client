@@ -18,14 +18,16 @@ void main() {
   });
 
   group('strings cache', () {
-    test('returns empty map when nothing cached', () {
-      expect(service.strings, <String, String>{});
+    test('returns null when nothing cached', () {
+      expect(service.cachedStrings, isNull);
     });
 
-    test('saves and reloads the override map', () async {
-      await service.saveStrings({'welcomeMessage': 'Hi there'});
+    test('saves and reloads the override map tagged with its locale', () async {
+      await service.saveStrings('fr', {'welcomeMessage': 'Bonjour'});
 
-      expect(service.strings, {'welcomeMessage': 'Hi there'});
+      final cached = service.cachedStrings;
+      expect(cached?.locale, 'fr');
+      expect(cached?.overrides, {'welcomeMessage': 'Bonjour'});
     });
   });
 

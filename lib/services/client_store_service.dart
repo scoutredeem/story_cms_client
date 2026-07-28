@@ -55,24 +55,34 @@ class ClientStoreService {
   // ------------------------------------
   // Strings
   // ------------------------------------
-  Map<String, String> get strings {
-    final strings = box.get(Keys.strings.toString());
 
-    if (strings == null) {
-      return {};
-    }
+  /// The last-cached interface-string overrides, tagged with the locale
+  /// they belong to - null if nothing is cached or the cache is unreadable.
+  /// Tagging the locale lets callers refuse to apply this cache when it
+  /// belongs to a different locale than the one currently requested (see
+  /// StringsManager), instead of leaking a stale locale's strings.
+  ({String locale, Map<String, String> overrides})? get cachedStrings {
+    final raw = box.get(Keys.strings.toString());
+    if (raw == null) return null;
 
     try {
-      return (jsonDecode(strings) as Map).cast<String, String>();
+      final decoded = jsonDecode(raw) as Map;
+      return (
+        locale: decoded['locale'] as String,
+        overrides: (decoded['overrides'] as Map).cast<String, String>(),
+      );
     } catch (e) {
       log('Error while parsing strings: $e');
-      return {};
+      return null;
     }
   }
 
-  Future<void> saveStrings(Map<String, String> strings) async {
+  Future<void> saveStrings(String locale, Map<String, String> overrides) async {
     try {
-      await box.put(Keys.strings.toString(), jsonEncode(strings));
+      await box.put(
+        Keys.strings.toString(),
+        jsonEncode({'locale': locale, 'overrides': overrides}),
+      );
     } catch (e) {
       log('Error while saving strings: $e');
     }

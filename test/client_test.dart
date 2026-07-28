@@ -9,34 +9,37 @@ import 'package:story_cms_client/services/network_service.dart';
 
 void main() {
   group('StoryCMSClient.getStrings', () {
-    test(
-      'hits /ui/v1/translation with locale as a query parameter and strips ARB metadata',
-      () async {
-        Uri? requestedUri;
-        final mockClient = MockClient((request) async {
-          requestedUri = request.url;
-          return http.Response(
-            jsonEncode({
-              '@@locale': 'ar',
-              'welcomeMessage': 'Hi',
-              'loginButton': 'Log in',
-            }),
-            200,
-          );
-        });
-
-        final client = StoryCMSClient(
-          NetworkService(mockClient),
-          baseUrl: 'https://example.com/api/v1',
+    test('hits /ui/v1/translation with locale as a query parameter, strips ARB '
+        'metadata but keeps @@locale', () async {
+      Uri? requestedUri;
+      final mockClient = MockClient((request) async {
+        requestedUri = request.url;
+        return http.Response(
+          jsonEncode({
+            '@@locale': 'ar',
+            '@welcomeMessage': {'description': 'greeting'},
+            'welcomeMessage': 'Hi',
+            'loginButton': 'Log in',
+          }),
+          200,
         );
+      });
 
-        final strings = await client.getStrings(locale: 'ar');
+      final client = StoryCMSClient(
+        NetworkService(mockClient),
+        baseUrl: 'https://example.com/api/v1',
+      );
 
-        expect(requestedUri?.path, '/ui/v1/translation');
-        expect(requestedUri?.queryParameters, {'locale': 'ar'});
-        expect(strings, {'welcomeMessage': 'Hi', 'loginButton': 'Log in'});
-      },
-    );
+      final strings = await client.getStrings(locale: 'ar');
+
+      expect(requestedUri?.path, '/ui/v1/translation');
+      expect(requestedUri?.queryParameters, {'locale': 'ar'});
+      expect(strings, {
+        '@@locale': 'ar',
+        'welcomeMessage': 'Hi',
+        'loginButton': 'Log in',
+      });
+    });
 
     test('returns an empty map when the response body is empty', () async {
       final mockClient = MockClient((request) async {
@@ -48,9 +51,27 @@ void main() {
         baseUrl: 'https://example.com/api/v1',
       );
 
-      final strings = await client.getStrings(locale: 'en');
+      final strings = await client.getStrings(locale: 'fr');
 
       expect(strings, <String, String>{});
+    });
+
+    test('throws UnimplementedError for locale "en" without hitting the '
+        'network - the CMS has no override endpoint data for the ARB '
+        'baseline language', () async {
+      final mockClient = MockClient((request) async {
+        fail('should not make a network request for locale "en"');
+      });
+
+      final client = StoryCMSClient(
+        NetworkService(mockClient),
+        baseUrl: 'https://example.com/api/v1',
+      );
+
+      expect(
+        () => client.getStrings(locale: 'en'),
+        throwsA(isA<UnimplementedError>()),
+      );
     });
   });
 

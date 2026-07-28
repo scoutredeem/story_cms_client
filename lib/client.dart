@@ -56,10 +56,14 @@ class StoryCMSClient implements CMSClient {
     final data = await _networkService.get(uri);
     // The endpoint returns a full ARB file (flat key/value, plus ARB
     // metadata keys like `@@locale` prefixed with `@`) rather than a
-    // `{"strings": {...}}` override map, so filter those out.
+    // `{"strings": {...}}` override map, so filter those out - except
+    // `@@locale`, which StringsManager keeps to confirm the response
+    // actually matches the requested locale before applying it.
     return Map.fromEntries(
       data.entries
-          .where((entry) => !entry.key.startsWith('@'))
+          .where(
+            (entry) => entry.key == '@@locale' || !entry.key.startsWith('@'),
+          )
           .map((entry) => MapEntry(entry.key, entry.value.toString())),
     );
   }
