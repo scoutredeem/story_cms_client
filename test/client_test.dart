@@ -55,7 +55,7 @@ void main() {
   });
 
   group('StoryCMSClient.getLocales', () {
-    test('parses the app array into LocaleItems', () async {
+    test('parses the app and content arrays independently', () async {
       Uri? requestedUri;
       final mockClient = MockClient((request) async {
         requestedUri = request.url;
@@ -65,6 +65,10 @@ void main() {
               'content': [
                 {
                   'locale': 'en',
+                  'stories': ['classic', 'express', 'youth'],
+                },
+                {
+                  'locale': 'de',
                   'stories': ['classic'],
                 },
               ],
@@ -94,23 +98,43 @@ void main() {
         baseUrl: 'https://example.com/api/v1',
       );
 
-      final locales = await client.getLocales();
+      final catalog = await client.getLocales();
 
       expect(requestedUri?.path, '/api/v1/locale');
-      expect(locales, [
-        LocaleItem(
+      expect(catalog.app, [
+        AppLocale(
           locale: 'en',
           name: 'English',
           nativeName: 'English',
           languageDirection: LanguageDirection.ltr,
         ),
-        LocaleItem(
+        AppLocale(
           locale: 'ar',
           name: 'Arabic',
           nativeName: 'العربية',
           languageDirection: LanguageDirection.rtl,
         ),
       ]);
+      expect(catalog.content, [
+        ContentLocale(locale: 'en', stories: ['classic', 'express', 'youth']),
+        ContentLocale(locale: 'de', stories: ['classic']),
+      ]);
+    });
+
+    test('missing app/content arrays parse as empty lists', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response(jsonEncode({}), 200);
+      });
+
+      final client = StoryCMSClient(
+        NetworkService(mockClient),
+        baseUrl: 'https://example.com/api/v1',
+      );
+
+      final catalog = await client.getLocales();
+
+      expect(catalog.app, <AppLocale>[]);
+      expect(catalog.content, <ContentLocale>[]);
     });
   });
 }

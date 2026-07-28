@@ -17,9 +17,10 @@ abstract class CMSClient {
   /// for any key not present in the returned map.
   Future<Map<String, String>> getStrings({required String locale});
 
-  /// Fetches the catalog of locales the CMS knows about (for the language
-  /// picker), including locales never bundled in the app's own ARB files.
-  Future<List<LocaleItem>> getLocales();
+  /// Fetches the CMS's locale catalog: `app` (picker metadata - name,
+  /// nativeName, direction - for locales never bundled in the app's own ARB
+  /// files) and `content` (which story slugs are published per locale).
+  Future<LocaleItem> getLocales();
 }
 
 class StoryCMSClient implements CMSClient {
@@ -64,13 +65,10 @@ class StoryCMSClient implements CMSClient {
   }
 
   @override
-  Future<List<LocaleItem>> getLocales() async {
+  Future<LocaleItem> getLocales() async {
     final uri = Uri.parse('$baseUrl/locale');
 
     final data = await _networkService.get(uri);
-    return (data['app'] as List<dynamic>? ?? [])
-        .cast<Map<String, dynamic>>()
-        .map<LocaleItem>(LocaleItem.fromMap)
-        .toList();
+    return LocaleItem.fromMap(data);
   }
 }

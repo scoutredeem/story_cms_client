@@ -1,3 +1,7 @@
+## 0.3.0
+
+* Breaking: `getLocales()` now returns a single `LocaleItem` with independent `app` (picker metadata) and `content` (published story slugs per locale) arrays, replacing the old flat `List<LocaleItem>`.
+
 ## 0.2.0
 
 * Add remote language list and language string fetching: `LocaleCatalogManager` fetches available locales, `StringsManager` fetches and caches translation strings per locale.

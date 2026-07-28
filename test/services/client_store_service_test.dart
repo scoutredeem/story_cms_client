@@ -29,24 +29,29 @@ void main() {
     });
   });
 
-  group('locales cache', () {
-    test('returns empty list when nothing cached', () {
-      expect(service.locales, <LocaleItem>[]);
+  group('locale catalog cache', () {
+    test('returns null when nothing cached', () {
+      expect(service.localeCatalog, isNull);
     });
 
     test('saves and reloads the locale catalog', () async {
-      final locales = [
-        LocaleItem(
-          locale: 'en',
-          name: 'English',
-          nativeName: 'English',
-          languageDirection: LanguageDirection.ltr,
-        ),
-      ];
+      final catalog = LocaleItem(
+        app: [
+          AppLocale(
+            locale: 'en',
+            name: 'English',
+            nativeName: 'English',
+            languageDirection: LanguageDirection.ltr,
+          ),
+        ],
+        content: [
+          ContentLocale(locale: 'en', stories: ['classic']),
+        ],
+      );
 
-      await service.saveLocales(locales);
+      await service.saveLocaleCatalog(catalog);
 
-      expect(service.locales, locales);
+      expect(service.localeCatalog, catalog);
     });
   });
 }

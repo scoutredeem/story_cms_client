@@ -1,50 +1,40 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
-enum LanguageDirection {
-  ltr,
-  rtl;
+import 'app_locale_model.dart';
+import 'content_locale_model.dart';
 
-  static LanguageDirection fromString(String value) {
-    return LanguageDirection.values.firstWhere(
-      (e) => e.name == value,
-      orElse: () => LanguageDirection.ltr,
-    );
-  }
-}
+export 'app_locale_model.dart';
+export 'content_locale_model.dart';
 
-/// Represents a locale the CMS knows about, as returned by `GET /locale`'s
-/// `app` array — the picker metadata (code, display names, direction).
+/// The full `GET /locale` response: [app] (picker metadata) and [content]
+/// (which story slugs are published per locale) are independent arrays -
+/// this wrapper mirrors that shape 1:1 rather than joining them, so callers
+/// search whichever list they actually care about (see
+/// `LocaleCatalogManager.catalog`).
 class LocaleItem {
-  final String locale;
-  final String name;
-  final String nativeName;
-  final LanguageDirection languageDirection;
+  final List<AppLocale> app;
+  final List<ContentLocale> content;
 
-  LocaleItem({
-    required this.locale,
-    required this.name,
-    required this.nativeName,
-    required this.languageDirection,
-  });
+  LocaleItem({required this.app, required this.content});
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      'locale': locale,
-      'name': name,
-      'nativeName': nativeName,
-      'languageDirection': languageDirection.name,
+      'app': app.map((e) => e.toMap()).toList(),
+      'content': content.map((e) => e.toMap()).toList(),
     };
   }
 
   factory LocaleItem.fromMap(Map<String, dynamic> map) {
     return LocaleItem(
-      locale: map['locale'] as String,
-      name: (map['name'] ?? '') as String,
-      nativeName: (map['nativeName'] ?? '') as String,
-      languageDirection: LanguageDirection.fromString(
-        (map['languageDirection'] ?? '') as String,
-      ),
+      app: (map['app'] as List<dynamic>? ?? [])
+          .cast<Map<String, dynamic>>()
+          .map(AppLocale.fromMap)
+          .toList(),
+      content: (map['content'] as List<dynamic>? ?? [])
+          .cast<Map<String, dynamic>>()
+          .map(ContentLocale.fromMap)
+          .toList(),
     );
   }
 
@@ -54,26 +44,23 @@ class LocaleItem {
       LocaleItem.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
-  String toString() {
-    return 'LocaleItem(locale: $locale, name: $name, nativeName: $nativeName, '
-        'languageDirection: $languageDirection)';
-  }
+  String toString() => 'LocaleItem(app: $app, content: $content)';
 
   @override
   bool operator ==(covariant LocaleItem other) {
     if (identical(this, other)) return true;
 
-    return other.locale == locale &&
-        other.name == name &&
-        other.nativeName == nativeName &&
-        other.languageDirection == languageDirection;
+    if (other.app.length != app.length) return false;
+    if (other.content.length != content.length) return false;
+    for (var i = 0; i < app.length; i++) {
+      if (other.app[i] != app[i]) return false;
+    }
+    for (var i = 0; i < content.length; i++) {
+      if (other.content[i] != content[i]) return false;
+    }
+    return true;
   }
 
   @override
-  int get hashCode {
-    return locale.hashCode ^
-        name.hashCode ^
-        nativeName.hashCode ^
-        languageDirection.hashCode;
-  }
+  int get hashCode => Object.hashAll(app) ^ Object.hashAll(content);
 }

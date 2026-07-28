@@ -13,8 +13,8 @@ enum Keys {
   /// Map of interface string key -> override value
   strings,
 
-  /// List of [LocaleItem]
-  locales,
+  /// The [LocaleItem] catalog (app + content arrays)
+  localeCatalog,
 }
 
 class ClientStoreService {
@@ -79,33 +79,28 @@ class ClientStoreService {
   }
 
   // ------------------------------------
-  // Locales
+  // Locale catalog
   // ------------------------------------
-  List<LocaleItem> get locales {
-    final locales = box.get(Keys.locales.toString());
+  LocaleItem? get localeCatalog {
+    final catalog = box.get(Keys.localeCatalog.toString());
 
-    if (locales == null) {
-      return [];
+    if (catalog == null) {
+      return null;
     }
 
     try {
-      return (jsonDecode(locales) as List)
-          .map<LocaleItem>((e) => LocaleItem.fromJson(e))
-          .toList();
+      return LocaleItem.fromJson(catalog);
     } catch (e) {
-      log('Error while parsing locales: $e');
-      return [];
+      log('Error while parsing locale catalog: $e');
+      return null;
     }
   }
 
-  Future<void> saveLocales(List<LocaleItem> locales) async {
+  Future<void> saveLocaleCatalog(LocaleItem catalog) async {
     try {
-      await box.put(
-        Keys.locales.toString(),
-        jsonEncode(locales.map((e) => e.toJson()).toList()),
-      );
+      await box.put(Keys.localeCatalog.toString(), catalog.toJson());
     } catch (e) {
-      log('Error while saving locales: $e');
+      log('Error while saving locale catalog: $e');
     }
   }
 }

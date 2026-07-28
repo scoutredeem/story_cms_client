@@ -3,42 +3,61 @@ import 'package:story_cms_client/models/locale_item_model.dart';
 
 void main() {
   group('LocaleItem', () {
-    test('fromMap parses languageDirection', () {
+    test('fromMap parses app and content independently', () {
       final item = LocaleItem.fromMap({
-        'locale': 'ar',
-        'name': 'Arabic',
-        'nativeName': 'العربية',
-        'languageDirection': 'rtl',
+        'app': [
+          {
+            'locale': 'en',
+            'name': 'English',
+            'nativeName': 'English',
+            'languageDirection': 'ltr',
+          },
+        ],
+        'content': [
+          {
+            'locale': 'de',
+            'stories': ['classic'],
+          },
+        ],
       });
 
-      expect(item.locale, 'ar');
-      expect(item.name, 'Arabic');
-      expect(item.nativeName, 'العربية');
-      expect(item.languageDirection, LanguageDirection.rtl);
+      expect(item.app, [
+        AppLocale(
+          locale: 'en',
+          name: 'English',
+          nativeName: 'English',
+          languageDirection: LanguageDirection.ltr,
+        ),
+      ]);
+      expect(item.content, [
+        ContentLocale(locale: 'de', stories: ['classic']),
+      ]);
     });
 
-    test('toJson/fromJson round-trips', () {
+    test('missing app/content keys parse as empty lists', () {
+      final item = LocaleItem.fromMap({});
+
+      expect(item.app, <AppLocale>[]);
+      expect(item.content, <ContentLocale>[]);
+    });
+
+    test('toJson/fromJson round-trips both lists, including when empty', () {
       final item = LocaleItem(
-        locale: 'en',
-        name: 'English',
-        nativeName: 'English',
-        languageDirection: LanguageDirection.ltr,
+        app: [
+          AppLocale(
+            locale: 'en',
+            name: 'English',
+            nativeName: 'English',
+            languageDirection: LanguageDirection.ltr,
+          ),
+        ],
+        content: [],
       );
 
       final restored = LocaleItem.fromJson(item.toJson());
 
       expect(restored, item);
-    });
-
-    test('unknown languageDirection falls back to ltr', () {
-      final item = LocaleItem.fromMap({
-        'locale': 'en',
-        'name': 'English',
-        'nativeName': 'English',
-        'languageDirection': 'sideways',
-      });
-
-      expect(item.languageDirection, LanguageDirection.ltr);
+      expect(restored.content, <ContentLocale>[]);
     });
   });
 }

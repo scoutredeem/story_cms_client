@@ -7,44 +7,45 @@ import '../../models/locale_item_model.dart';
 import '../../services/client_store_service.dart';
 
 /// Mirrors [PagesManager]/[StringsManager]: exposes the CMS's locale catalog
-/// as a signal (locale, name, nativeName, direction), sourced from
+/// ([LocaleItem]'s `app` and `content` arrays) as a signal, sourced from
 /// [CMSClient.getLocales], cache-then-refresh. Replaces the picker's old
 /// dependency on `AppLocalizations.supportedLocales` and a hardcoded
 /// metadata array — this is now the single source of "which locales exist
-/// and what are they called," including locales never bundled in the app.
+/// and what are they called" (`.app`) and "which story slugs are published
+/// per locale" (`.content`), including locales never bundled in the app.
 class LocaleCatalogManager {
   Future<void> init({
     required CMSClient client,
     required ClientStoreService? storeService,
   }) async {
-    _loadCachedLocales(storeService);
+    _loadCachedCatalog(storeService);
 
     try {
-      final remoteLocales = await client.getLocales();
-      _localesSignal.value = remoteLocales;
-      await storeService?.saveLocales(locales);
+      final remoteCatalog = await client.getLocales();
+      _catalogSignal.value = remoteCatalog;
+      await storeService?.saveLocaleCatalog(remoteCatalog);
     } catch (e) {
-      log('Error fetching locales: $e');
+      log('Error fetching locale catalog: $e');
     }
   }
 
-  void _loadCachedLocales(ClientStoreService? store) {
+  void _loadCachedCatalog(ClientStoreService? store) {
     if (store == null) return;
 
     try {
-      final cachedLocales = store.locales;
-      if (cachedLocales.isNotEmpty) {
-        _localesSignal.value = cachedLocales;
+      final cachedCatalog = store.localeCatalog;
+      if (cachedCatalog != null) {
+        _catalogSignal.value = cachedCatalog;
       }
     } catch (e) {
-      log('Error loading cached locales: $e');
+      log('Error loading cached locale catalog: $e');
     }
   }
 
-  final _localesSignal = Signal<List<LocaleItem>>([]);
-  List<LocaleItem> get locales => _localesSignal.value;
+  final _catalogSignal = Signal<LocaleItem?>(null);
+  LocaleItem? get catalog => _catalogSignal.value;
 
   void dispose() {
-    _localesSignal.value = [];
+    _catalogSignal.value = null;
   }
 }

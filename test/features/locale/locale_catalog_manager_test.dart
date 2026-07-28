@@ -7,13 +7,13 @@ import 'package:story_cms_client/models/page_model.dart';
 import 'package:story_cms_client/services/client_store_service.dart';
 
 class _FakeCMSClient implements CMSClient {
-  List<LocaleItem> localesToReturn = [];
+  LocaleItem catalogToReturn = LocaleItem(app: [], content: []);
   Object? errorToThrow;
 
   @override
-  Future<List<LocaleItem>> getLocales() async {
+  Future<LocaleItem> getLocales() async {
     if (errorToThrow != null) throw errorToThrow!;
-    return localesToReturn;
+    return catalogToReturn;
   }
 
   @override
@@ -25,13 +25,13 @@ class _FakeCMSClient implements CMSClient {
   ) async => [];
 }
 
-final _en = LocaleItem(
+final _en = AppLocale(
   locale: 'en',
   name: 'English',
   nativeName: 'English',
   languageDirection: LanguageDirection.ltr,
 );
-final _ku = LocaleItem(
+final _ku = AppLocale(
   locale: 'ku',
   name: 'Kurdish',
   nativeName: 'Kurdî',
@@ -59,25 +59,28 @@ void main() {
   test(
     'loads cached catalog immediately, then overwrites on fetch success',
     () async {
-      await storeService.saveLocales([_en]);
-      client.localesToReturn = [_en, _ku];
+      await storeService.saveLocaleCatalog(LocaleItem(app: [_en], content: []));
+      client.catalogToReturn = LocaleItem(app: [_en, _ku], content: []);
 
       await manager.init(client: client, storeService: storeService);
 
-      expect(manager.locales, [_en, _ku]);
-      expect(storeService.locales, [_en, _ku]);
+      expect(manager.catalog, LocaleItem(app: [_en, _ku], content: []));
+      expect(
+        storeService.localeCatalog,
+        LocaleItem(app: [_en, _ku], content: []),
+      );
     },
   );
 
   test(
     'keeps the last cache and does not throw when the fetch fails',
     () async {
-      await storeService.saveLocales([_en]);
+      await storeService.saveLocaleCatalog(LocaleItem(app: [_en], content: []));
       client.errorToThrow = Exception('network down');
 
       await manager.init(client: client, storeService: storeService);
 
-      expect(manager.locales, [_en]);
+      expect(manager.catalog, LocaleItem(app: [_en], content: []));
     },
   );
 }
