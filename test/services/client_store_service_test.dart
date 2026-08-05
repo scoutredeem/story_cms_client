@@ -38,7 +38,7 @@ void main() {
 
     test('saves and reloads the locale catalog', () async {
       final catalog = LocaleCatalog(
-        app: [
+        languages: [
           AppLocale(
             locale: 'en',
             name: 'English',
@@ -49,6 +49,8 @@ void main() {
         content: [
           ContentLocale(locale: 'en', stories: ['classic']),
         ],
+        app: ['en'],
+        media: ['en'],
       );
 
       await service.saveLocaleCatalog(catalog);

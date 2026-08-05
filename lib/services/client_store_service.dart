@@ -13,7 +13,7 @@ enum Keys {
   /// Map of interface string key -> override value
   strings,
 
-  /// The [LocaleCatalog] catalog (app + content arrays)
+  /// The [LocaleCatalog] catalog (languages, content, app, media arrays)
   localeCatalog,
 }
 

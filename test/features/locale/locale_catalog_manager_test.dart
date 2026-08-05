@@ -7,7 +7,12 @@ import 'package:story_cms_client/models/page_model.dart';
 import 'package:story_cms_client/services/client_store_service.dart';
 
 class _FakeCMSClient implements CMSClient {
-  LocaleCatalog catalogToReturn = LocaleCatalog(app: [], content: []);
+  LocaleCatalog catalogToReturn = LocaleCatalog(
+    languages: [],
+    content: [],
+    app: [],
+    media: [],
+  );
   Object? errorToThrow;
 
   @override
@@ -60,16 +65,34 @@ void main() {
     'loads cached catalog immediately, then overwrites on fetch success',
     () async {
       await storeService.saveLocaleCatalog(
-        LocaleCatalog(app: [_en], content: []),
+        LocaleCatalog(languages: [_en], content: [], app: ['en'], media: []),
       );
-      client.catalogToReturn = LocaleCatalog(app: [_en, _ku], content: []);
+      client.catalogToReturn = LocaleCatalog(
+        languages: [_en, _ku],
+        content: [],
+        app: ['en', 'ku'],
+        media: [],
+      );
 
       await manager.init(client: client, storeService: storeService);
 
-      expect(manager.catalog, LocaleCatalog(app: [_en, _ku], content: []));
+      expect(
+        manager.catalog,
+        LocaleCatalog(
+          languages: [_en, _ku],
+          content: [],
+          app: ['en', 'ku'],
+          media: [],
+        ),
+      );
       expect(
         storeService.localeCatalog,
-        LocaleCatalog(app: [_en, _ku], content: []),
+        LocaleCatalog(
+          languages: [_en, _ku],
+          content: [],
+          app: ['en', 'ku'],
+          media: [],
+        ),
       );
     },
   );
@@ -78,13 +101,16 @@ void main() {
     'keeps the last cache and does not throw when the fetch fails',
     () async {
       await storeService.saveLocaleCatalog(
-        LocaleCatalog(app: [_en], content: []),
+        LocaleCatalog(languages: [_en], content: [], app: ['en'], media: []),
       );
       client.errorToThrow = Exception('network down');
 
       await manager.init(client: client, storeService: storeService);
 
-      expect(manager.catalog, LocaleCatalog(app: [_en], content: []));
+      expect(
+        manager.catalog,
+        LocaleCatalog(languages: [_en], content: [], app: ['en'], media: []),
+      );
     },
   );
 }

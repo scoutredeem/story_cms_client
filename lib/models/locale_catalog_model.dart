@@ -7,27 +7,37 @@ import 'content_locale_model.dart';
 export 'app_locale_model.dart';
 export 'content_locale_model.dart';
 
-/// The full `GET /locale` response: [app] (picker metadata) and [content]
-/// (which story slugs are published per locale) are independent arrays -
-/// this wrapper mirrors that shape 1:1 rather than joining them, so callers
-/// search whichever list they actually care about (see
-/// `LocaleCatalogManager.catalog`).
+/// The full `GET /locale` response. [languages] is metadata-only (name,
+/// nativeName, direction) for every locale the CMS is configured with - it's
+/// a lookup table, not an iteration source. [content], [app] and [media] are
+/// the actual dynamic lists: which locales currently qualify for content,
+/// app-UI (>80% translated, excluding AI-prefilled), and media respectively.
+/// A locale can appear in [languages] without appearing in any of the three.
 class LocaleCatalog {
-  final List<AppLocale> app;
+  final List<AppLocale> languages;
   final List<ContentLocale> content;
+  final List<String> app;
+  final List<String> media;
 
-  LocaleCatalog({required this.app, required this.content});
+  LocaleCatalog({
+    required this.languages,
+    required this.content,
+    required this.app,
+    required this.media,
+  });
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      'app': app.map((e) => e.toMap()).toList(),
+      'languages': languages.map((e) => e.toMap()).toList(),
       'content': content.map((e) => e.toMap()).toList(),
+      'app': app,
+      'media': media,
     };
   }
 
   factory LocaleCatalog.fromMap(Map<String, dynamic> map) {
     return LocaleCatalog(
-      app: (map['app'] as List<dynamic>? ?? [])
+      languages: (map['languages'] as List<dynamic>? ?? [])
           .cast<Map<String, dynamic>>()
           .map(AppLocale.fromMap)
           .toList(),
@@ -35,6 +45,8 @@ class LocaleCatalog {
           .cast<Map<String, dynamic>>()
           .map(ContentLocale.fromMap)
           .toList(),
+      app: (map['app'] as List<dynamic>? ?? []).cast<String>().toList(),
+      media: (map['media'] as List<dynamic>? ?? []).cast<String>().toList(),
     );
   }
 
@@ -44,23 +56,36 @@ class LocaleCatalog {
       LocaleCatalog.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
-  String toString() => 'LocaleCatalog(app: $app, content: $content)';
+  String toString() =>
+      'LocaleCatalog(languages: $languages, content: $content, app: $app, media: $media)';
 
   @override
   bool operator ==(covariant LocaleCatalog other) {
     if (identical(this, other)) return true;
 
-    if (other.app.length != app.length) return false;
+    if (other.languages.length != languages.length) return false;
     if (other.content.length != content.length) return false;
-    for (var i = 0; i < app.length; i++) {
-      if (other.app[i] != app[i]) return false;
+    if (other.app.length != app.length) return false;
+    if (other.media.length != media.length) return false;
+    for (var i = 0; i < languages.length; i++) {
+      if (other.languages[i] != languages[i]) return false;
     }
     for (var i = 0; i < content.length; i++) {
       if (other.content[i] != content[i]) return false;
+    }
+    for (var i = 0; i < app.length; i++) {
+      if (other.app[i] != app[i]) return false;
+    }
+    for (var i = 0; i < media.length; i++) {
+      if (other.media[i] != media[i]) return false;
     }
     return true;
   }
 
   @override
-  int get hashCode => Object.hashAll(app) ^ Object.hashAll(content);
+  int get hashCode =>
+      Object.hashAll(languages) ^
+      Object.hashAll(content) ^
+      Object.hashAll(app) ^
+      Object.hashAll(media);
 }
