@@ -29,7 +29,7 @@ class _FakeCMSClient implements CMSClient {
 
   @override
   Future<LocaleCatalog> getLocales() async =>
-      LocaleCatalog(app: [], content: []);
+      LocaleCatalog(languages: [], content: [], app: [], media: []);
 }
 
 void main() {

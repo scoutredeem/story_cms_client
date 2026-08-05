@@ -76,73 +76,83 @@ void main() {
   });
 
   group('StoryCMSClient.getLocales', () {
-    test('parses the app and content arrays independently', () async {
-      Uri? requestedUri;
-      final mockClient = MockClient((request) async {
-        requestedUri = request.url;
-        return http.Response.bytes(
-          utf8.encode(
-            jsonEncode({
-              'content': [
-                {
-                  'locale': 'en',
-                  'stories': ['classic', 'express', 'youth'],
-                },
-                {
-                  'locale': 'de',
-                  'stories': ['classic'],
-                },
-              ],
-              'app': [
-                {
-                  'locale': 'en',
-                  'name': 'English',
-                  'nativeName': 'English',
-                  'languageDirection': 'ltr',
-                },
-                {
-                  'locale': 'ar',
-                  'name': 'Arabic',
-                  'nativeName': 'العربية',
-                  'languageDirection': 'rtl',
-                },
-              ],
-            }),
-          ),
-          200,
-          headers: {'content-type': 'application/json; charset=utf-8'},
+    test(
+      'parses the languages, content, app and media arrays independently',
+      () async {
+        Uri? requestedUri;
+        final mockClient = MockClient((request) async {
+          requestedUri = request.url;
+          return http.Response.bytes(
+            utf8.encode(
+              jsonEncode({
+                'languages': [
+                  {
+                    'locale': 'en',
+                    'name': 'English',
+                    'nativeName': 'English',
+                    'languageDirection': 'ltr',
+                  },
+                  {
+                    'locale': 'ar',
+                    'name': 'Arabic',
+                    'nativeName': 'العربية',
+                    'languageDirection': 'rtl',
+                  },
+                ],
+                'content': [
+                  {
+                    'locale': 'en',
+                    'stories': ['classic', 'express', 'youth'],
+                  },
+                  {
+                    'locale': 'de',
+                    'stories': ['classic'],
+                  },
+                ],
+                'app': ['en'],
+                'media': ['en'],
+              }),
+            ),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        });
+
+        final client = StoryCMSClient(
+          NetworkService(mockClient),
+          baseUrl: 'https://example.com/api/v1',
         );
-      });
 
-      final client = StoryCMSClient(
-        NetworkService(mockClient),
-        baseUrl: 'https://example.com/api/v1',
-      );
+        final catalog = await client.getLocales();
 
-      final catalog = await client.getLocales();
+        expect(requestedUri?.path, '/api/v1/locale');
+        expect(catalog.languages, [
+          AppLocale(
+            locale: 'en',
+            name: 'English',
+            nativeName: 'English',
+            languageDirection: LanguageDirection.ltr,
+          ),
+          AppLocale(
+            locale: 'ar',
+            name: 'Arabic',
+            nativeName: 'العربية',
+            languageDirection: LanguageDirection.rtl,
+          ),
+        ]);
+        expect(catalog.content, [
+          ContentLocale(
+            locale: 'en',
+            stories: ['classic', 'express', 'youth'],
+          ),
+          ContentLocale(locale: 'de', stories: ['classic']),
+        ]);
+        expect(catalog.app, ['en']);
+        expect(catalog.media, ['en']);
+      },
+    );
 
-      expect(requestedUri?.path, '/api/v1/locale');
-      expect(catalog.app, [
-        AppLocale(
-          locale: 'en',
-          name: 'English',
-          nativeName: 'English',
-          languageDirection: LanguageDirection.ltr,
-        ),
-        AppLocale(
-          locale: 'ar',
-          name: 'Arabic',
-          nativeName: 'العربية',
-          languageDirection: LanguageDirection.rtl,
-        ),
-      ]);
-      expect(catalog.content, [
-        ContentLocale(locale: 'en', stories: ['classic', 'express', 'youth']),
-        ContentLocale(locale: 'de', stories: ['classic']),
-      ]);
-    });
-
-    test('missing app/content arrays parse as empty lists', () async {
+    test('missing languages/content/app/media arrays parse as empty lists', () async {
       final mockClient = MockClient((request) async {
         return http.Response(jsonEncode({}), 200);
       });
@@ -154,8 +164,10 @@ void main() {
 
       final catalog = await client.getLocales();
 
-      expect(catalog.app, <AppLocale>[]);
+      expect(catalog.languages, <AppLocale>[]);
       expect(catalog.content, <ContentLocale>[]);
+      expect(catalog.app, <String>[]);
+      expect(catalog.media, <String>[]);
     });
   });
 }
