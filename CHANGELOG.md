@@ -1,3 +1,7 @@
+## 0.4.0
+
+* Breaking: `LocaleCatalog.app` and `.media` are now `List<String>` of locale codes (was `AppLocale[]` metadata) — `app` lists locales past the 80% UI-translation threshold, `media` is new and parallel. Metadata (name/nativeName/direction) moved to a new `languages: List<AppLocale>` lookup field. `content` is unchanged.
+
 ## 0.3.0
 
 * Breaking: `getLocales()` now returns a single `LocaleItem` with independent `app` (picker metadata) and `content` (published story slugs per locale) arrays, replacing the old flat `List<LocaleItem>`.
