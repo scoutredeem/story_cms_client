@@ -393,9 +393,19 @@ a new app (e.g. BNAP):
    Wire it into `MaterialApp` alongside a catalog-driven `supportedLocales`
    (not a static bundled-locale list - a CMS-introduced locale needs to
    resolve too) and an explicit `locale:` tracking the app's own locale
-   setting, not just device negotiation:
+   setting, not just device negotiation. Guard on `catalog.app` being
+   *empty*, not just null - `MaterialApp`/`WidgetsApp` requires
+   `supportedLocales.isNotEmpty`, and an empty (but non-null) `catalog.app`
+   is a valid catalog shape (a fresh tenant, a transient backend hiccup),
+   not something a `??` on `catalog` alone catches:
 
    ```dart
+   final catalogAppLocales =
+       get<LocaleCatalogManager>().catalog?.app.map(Locale.new).toList();
+   final supportedLocales = catalogAppLocales != null && catalogAppLocales.isNotEmpty
+       ? catalogAppLocales
+       : const [Locale('en')];
+
    return MaterialApp.router(
      locale: Locale(get<LocaleManager>().appLocale),
      localizationsDelegates: [
@@ -404,9 +414,7 @@ a new app (e.g. BNAP):
        const FallbackMaterialLocalizationsDelegate(),
        const FallbackCupertinoLocalizationsDelegate(),
      ],
-     supportedLocales:
-         get<LocaleCatalogManager>().catalog?.app.map(Locale.new).toList() ??
-             const [Locale('en')],
+     supportedLocales: supportedLocales,
      // ...
    );
    ```

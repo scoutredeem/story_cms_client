@@ -1,6 +1,7 @@
-## 0.5.0
+## 0.5.1
 
 * Add `LocaleCatalogManager.directionFor(String localeCode)`, resolving a `TextDirection` from `catalog.languages` (rtl/ltr), with a documented README recipe (README, "Framework delegate fallback" / "Content-locale direction is a second, independent scope") for wiring it into both app-wide `Directionality` (via a `WidgetsLocalizations` fallback delegate) and a per-content-locale `Directionality` wrap. Fixes a latent bug in the previously-documented fallback delegate example, which hardcoded `TextDirection.ltr` for any locale Flutter doesn't ship, silently breaking RTL for CMS-tagged-rtl locales like `ckb`/`prs`/`ps`.
+* Fix the README's `MaterialApp` wiring example: `supportedLocales` built from `catalog?.app` guarded only against a null catalog, not an empty `app` array. `WidgetsApp` requires `supportedLocales.isNotEmpty` - an empty (but non-null) `catalog.app` reaches Flutter's `basicLocaleListResolution`, which calls `supportedLocales.first` on the empty list and crashes. Now guarded on `isEmpty` too.
 
 ## 0.4.0
 
