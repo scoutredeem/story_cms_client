@@ -1,3 +1,7 @@
+## 0.5.0
+
+* Add `LocaleCatalogManager.directionFor(String localeCode)`, resolving a `TextDirection` from `catalog.languages` (rtl/ltr), with a documented README recipe (README, "Framework delegate fallback" / "Content-locale direction is a second, independent scope") for wiring it into both app-wide `Directionality` (via a `WidgetsLocalizations` fallback delegate) and a per-content-locale `Directionality` wrap. Fixes a latent bug in the previously-documented fallback delegate example, which hardcoded `TextDirection.ltr` for any locale Flutter doesn't ship, silently breaking RTL for CMS-tagged-rtl locales like `ckb`/`prs`/`ps`.
+
 ## 0.4.0
 
 * Breaking: `LocaleCatalog.app` and `.media` are now `List<String>` of locale codes (was `AppLocale[]` metadata) — `app` lists locales past the 80% UI-translation threshold, `media` is new and parallel. Metadata (name/nativeName/direction) moved to a new `languages: List<AppLocale>` lookup field. `content` is unchanged.

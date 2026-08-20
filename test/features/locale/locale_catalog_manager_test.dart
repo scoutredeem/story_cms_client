@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:story_cms_client/client.dart';
@@ -41,6 +42,12 @@ final _ku = AppLocale(
   name: 'Kurdish',
   nativeName: 'Kurdî',
   languageDirection: LanguageDirection.ltr,
+);
+final _ar = AppLocale(
+  locale: 'ar',
+  name: 'Arabic',
+  nativeName: 'العربية',
+  languageDirection: LanguageDirection.rtl,
 );
 
 void main() {
@@ -113,4 +120,46 @@ void main() {
       );
     },
   );
+
+  group('directionFor', () {
+    test('returns ltr before the catalog has loaded', () {
+      expect(manager.directionFor('ar'), TextDirection.ltr);
+    });
+
+    test('returns rtl for a locale tagged rtl in the catalog', () async {
+      client.catalogToReturn = LocaleCatalog(
+        languages: [_en, _ar],
+        content: [],
+        app: ['en', 'ar'],
+        media: [],
+      );
+      await manager.init(client: client, storeService: null);
+
+      expect(manager.directionFor('ar'), TextDirection.rtl);
+    });
+
+    test('returns ltr for a locale tagged ltr in the catalog', () async {
+      client.catalogToReturn = LocaleCatalog(
+        languages: [_en, _ar],
+        content: [],
+        app: ['en', 'ar'],
+        media: [],
+      );
+      await manager.init(client: client, storeService: null);
+
+      expect(manager.directionFor('en'), TextDirection.ltr);
+    });
+
+    test('returns ltr for a locale absent from the catalog', () async {
+      client.catalogToReturn = LocaleCatalog(
+        languages: [_en, _ar],
+        content: [],
+        app: ['en', 'ar'],
+        media: [],
+      );
+      await manager.init(client: client, storeService: null);
+
+      expect(manager.directionFor('xx'), TextDirection.ltr);
+    });
+  });
 }

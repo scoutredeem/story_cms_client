@@ -342,7 +342,13 @@ a new app (e.g. BNAP):
    subclass can't be added for a CMS-introduced locale at runtime, so use a
    generic fallback delegate per type instead - `isSupported` returns true
    for anything Flutter doesn't officially support, `load` always resolves
-   to the English resource:
+   to the English resource, **except** `WidgetsLocalizations.textDirection`,
+   which drives Flutter's own app-wide `Directionality` (`Localizations`
+   wraps its child in `Directionality(textDirection: WidgetsLocalizations.of
+   (context).textDirection, ...)` internally) - hardcoding that to English's
+   `ltr` silently breaks RTL for any locale Flutter doesn't ship (e.g. `ckb`,
+   `prs`, `ps`), even when the CMS catalog correctly tags it `rtl`. Source it
+   from `LocaleCatalogManager.directionFor` instead:
 
    ```dart
    class FallbackWidgetsLocalizationsDelegate extends LocalizationsDelegate<WidgetsLocalizations> {
@@ -353,14 +359,87 @@ a new app (e.g. BNAP):
          !kWidgetsSupportedLanguages.contains(locale.languageCode);
 
      @override
-     Future<WidgetsLocalizations> load(Locale locale) =>
-         GlobalWidgetsLocalizations.delegate.load(const Locale('en'));
+     Future<WidgetsLocalizations> load(Locale locale) {
+       return SynchronousFuture<WidgetsLocalizations>(
+         _FallbackWidgetsLocalizations(
+           get<LocaleCatalogManager>().directionFor(locale.languageCode),
+         ),
+       );
+     }
 
      @override
      bool shouldReload(FallbackWidgetsLocalizationsDelegate old) => false;
    }
+
+   // DefaultWidgetsLocalizations (Flutter's own English implementation)
+   // already implements every other member - extend it and override just
+   // textDirection, instead of hand-rolling all ~15 members.
+   class _FallbackWidgetsLocalizations extends DefaultWidgetsLocalizations {
+     const _FallbackWidgetsLocalizations(this.textDirection);
+
+     @override
+     final TextDirection textDirection;
+   }
    ```
 
-   (and the `Material`/`Cupertino` equivalents). Place these **after** the
-   app's normal `localizationsDelegates` so a real, officially-supported
-   delegate still wins when one exists.
+   (`Material`/`Cupertino` have no direction concept, so their fallbacks stay
+   a flat English passthrough - one `LocalizationsDelegate` subclass per
+   type, `load` always resolves to `GlobalMaterialLocalizations.delegate
+   .load(const Locale('en'))` / `GlobalCupertinoLocalizations.delegate.load
+   (const Locale('en'))`, `isSupported` true for anything Flutter doesn't
+   ship). Place all three **after** the app's normal `localizationsDelegates`
+   so a real, officially-supported delegate still wins when one exists.
+
+   Wire it into `MaterialApp` alongside a catalog-driven `supportedLocales`
+   (not a static bundled-locale list - a CMS-introduced locale needs to
+   resolve too) and an explicit `locale:` tracking the app's own locale
+   setting, not just device negotiation:
+
+   ```dart
+   return MaterialApp.router(
+     locale: Locale(get<LocaleManager>().appLocale),
+     localizationsDelegates: [
+       ...AppLocalizations.localizationsDelegates,
+       const FallbackWidgetsLocalizationsDelegate(),
+       const FallbackMaterialLocalizationsDelegate(),
+       const FallbackCupertinoLocalizationsDelegate(),
+     ],
+     supportedLocales:
+         get<LocaleCatalogManager>().catalog?.app.map(Locale.new).toList() ??
+             const [Locale('en')],
+     // ...
+   );
+   ```
+
+7. **Content-locale direction is a second, independent scope** - if the app
+   has a content locale that can differ from its interface locale (this
+   package's `content`/`app` split exists precisely because they diverge),
+   the app-wide `Directionality` from point 6 only follows `appLocale`. It
+   does **not** flip for RTL content shown while the interface locale stays
+   LTR (or vice versa) - Flutter's `Localizations`/`locale:` machinery has no
+   notion of a second, independently-directioned scope. Wrap the
+   content-rendering subtree in its own `Directionality`, sourced from the
+   same `LocaleCatalogManager.directionFor`, keyed on content locale instead
+   of app locale:
+
+   ```dart
+   class DirectionalContent extends StatelessWidget {
+     final Widget child;
+     const DirectionalContent({super.key, required this.child});
+
+     @override
+     Widget build(BuildContext context) {
+       return SignalBuilder(
+         builder: (context) => Directionality(
+           textDirection: get<LocaleCatalogManager>()
+               .directionFor(get<LocaleManager>().contentLocale),
+           child: child,
+         ),
+       );
+     }
+   }
+   ```
+
+   Wrap only the content screen(s), not the whole app - everything outside
+   it (nav chrome, settings, pickers) should keep following the app-wide
+   `Directionality` from point 6 instead.

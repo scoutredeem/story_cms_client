@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:flutter/widgets.dart';
 import 'package:signals/signals.dart';
 
 import '../../client.dart';
@@ -45,6 +46,30 @@ class LocaleCatalogManager {
 
   final _catalogSignal = Signal<LocaleCatalog?>(null);
   LocaleCatalog? get catalog => _catalogSignal.value;
+
+  /// Resolves the [TextDirection] for [localeCode] from `catalog.languages`.
+  ///
+  /// This is the single source of truth apps should use for RTL, at any
+  /// scope - both the app-level `Directionality` Flutter derives from
+  /// `WidgetsLocalizations.textDirection` (see the "Framework delegate
+  /// fallback" section of the README) and any app-specific per-content
+  /// `Directionality` wrap, when an app's content locale can differ from its
+  /// interface locale.
+  ///
+  /// Falls back to [TextDirection.ltr] when the catalog hasn't loaded yet or
+  /// [localeCode] has no matching entry - the same default an unset
+  /// `Directionality` ambient would have anyway, so this never regresses an
+  /// app that doesn't check it.
+  TextDirection directionFor(String localeCode) {
+    for (final language in catalog?.languages ?? const <AppLocale>[]) {
+      if (language.locale == localeCode) {
+        return language.languageDirection == LanguageDirection.rtl
+            ? TextDirection.rtl
+            : TextDirection.ltr;
+      }
+    }
+    return TextDirection.ltr;
+  }
 
   void dispose() {
     _catalogSignal.value = null;
